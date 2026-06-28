@@ -1,4 +1,4 @@
-from flask import Flask
+from flask import Flask,render_template
 from flask_sqlalchemy import SQLAlchemy
 
 app = Flask(__name__)
@@ -17,11 +17,9 @@ class Document(db.Model):
     original_text = db.Column(db.Text, nullable=False)
     summary_text = db.Column(db.Text)
 
-
-@app.route("/")
-def home():
-    return "Study Buddy"
-
+@app.route('/')
+def index():
+    return render_template('index.html')
 
 if __name__ == "__main__":
     with app.app_context():
