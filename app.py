@@ -16,7 +16,12 @@ class Document(db.Model):
     title = db.Column(db.String(200), nullable=False)
     original_text = db.Column(db.Text, nullable=False)
     summary_text = db.Column(db.Text)
-
+# Model Flashcard
+class Flashcard(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    question = db.Column(db.String(500), nullable=False)
+    answer = db.Column(db.String(500), nullable=False)
+    document_id = db.Column(db.Integer, db.ForeignKey('document.id'), nullable=False)
 @app.route('/')
 def index():
     return render_template('index.html')
