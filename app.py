@@ -1,4 +1,4 @@
-from flask import Flask, render_template
+from flask import Flask, render_template, request, flash
 from flask_sqlalchemy import SQLAlchemy
 
 app = Flask(__name__)
@@ -25,6 +25,16 @@ class Flashcard(db.Model):
 @app.route('/')
 def index():
     return render_template('index.html')
+
+@app.route('/upload', methods=['GET', 'POST'])
+def upload_doc():
+    if request.method == 'POST':
+        request.form.get('study_content')
+        doc = Document(title="Bài học mới", original_text='study_content')
+        db.session.add(doc)
+        db.session.commit()
+        flash("Tài liệu đã được tải lên thành công!", "success")
+    return render_template('upload.html')
 
 if __name__ == "__main__":
     with app.app_context():
