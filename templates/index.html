@@ -3,9 +3,130 @@
 {% block title %}Trang chủ - AI Study Buddy{% endblock %}
 
 {% block content %}
-<div class="rounded-3xl bg-white p-10 shadow-xl">
-  <h1 class="text-4xl font-bold text-slate-900">Chào mừng đến với AI Study Buddy!</h1>
-  <p class="mt-4 text-lg text-slate-600">Bắt đầu khám phá và học cùng AI.</p>
-  <a href="/upload_doc" class="inline-block mt-6 px-6 py-3 bg-sky-600 text-white font-semibold rounded-lg hover:bg-sky-700">Tải lên tài liệu</a>
-</div>
+<!-- HERO SECTION -->
+<section class="relative overflow-hidden bg-gradient-to-b from-white to-slate-50/50 rounded-3xl p-8 md:p-16 border border-slate-100 shadow-2xl shadow-slate-100/50">
+  <div class="absolute inset-0 bg-[linear-gradient(to_right,#8080800a_1px,transparent_1px),linear-gradient(to_bottom,#8080800a_1px,transparent_1px)] bg-[size:14px_24px] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,#000_70%,transparent_100%)]"></div>
+  
+  <div class="relative md:flex md:items-center md:gap-16">
+    <!-- Left Content -->
+    <div class="md:flex-1 space-y-6">
+      <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-sky-50 text-sky-700 border border-sky-100">
+        <span class="flex h-2 w-2 rounded-full bg-sky-500 animate-pulse"></span>
+        Trợ lý học tập AI thế hệ mới
+      </span>
+      <h1 class="text-4xl md:text-6xl font-black tracking-tight text-slate-900 leading-tight">
+        Học nhanh hơn, <br/>
+        <span class="bg-gradient-to-r from-sky-600 to-indigo-600 bg-clip-text text-transparent">Nhớ lâu hơn</span> với AI
+      </h1>
+      <p class="text-lg text-slate-600 max-w-xl leading-relaxed">
+        Tải lên tài liệu, hỏi đáp thông minh, tóm tắt và tự động tạo flashcard — mọi công cụ bạn cần để bứt phá điểm số chỉ trong một nền tảng.
+      </p>
+      <div class="pt-2 flex flex-col sm:flex-row gap-4">
+        <a href="/upload_doc" class="inline-flex items-center justify-center px-6 py-3.5 bg-slate-900 text-white font-medium rounded-xl hover:bg-slate-800 transform hover:-translate-y-0.5 transition-all duration-200 shadow-lg shadow-slate-900/20">
+          Tải lên tài liệu miễn phí
+        </a>
+        <a href="#features" class="inline-flex items-center justify-center px-6 py-3.5 border border-slate-200 bg-white rounded-xl text-slate-600 font-medium hover:bg-slate-50 hover:text-slate-900 transition-all duration-200">
+          Tìm hiểu tính năng
+        </a>
+      </div>
+    </div>
+    
+    <!-- Right Content (Mockup AI Chat) -->
+    <div class="md:flex-1 mt-12 md:mt-0">
+      <div class="bg-white rounded-2xl p-6 shadow-xl border border-slate-100 max-w-md mx-auto transform hover:rotate-1 transition-transform duration-300">
+        <div class="flex items-center gap-2 border-b border-slate-100 pb-4 mb-4">
+          <div class="w-3 h-3 rounded-full bg-rose-400"></div>
+          <div class="w-3 h-3 rounded-full bg-amber-400"></div>
+          <div class="w-3 h-3 rounded-full bg-emerald-400"></div>
+          <span class="text-xs text-slate-400 font-mono ml-2">ai-study-buddy.chat</span>
+        </div>
+        <div class="space-y-4">
+          <div class="flex justify-end">
+            <div class="bg-slate-100 text-slate-800 text-sm p-3 rounded-2xl rounded-tr-none max-w-[85%] font-medium">
+              "Tóm tắt chương 3 trong 5 ý chính giúp tôi."
+            </div>
+          </div>
+          <div class="flex gap-3">
+            <div class="w-8 h-8 rounded-full bg-gradient-to-tr from-sky-500 to-indigo-500 flex items-center justify-center text-white text-xs font-bold shrink-0">
+              AI
+            </div>
+            <div class="bg-sky-50 border border-sky-100/50 text-slate-700 text-sm p-4 rounded-2xl rounded-tl-none space-y-2">
+              <p class="font-semibold text-sky-900">✨ Tóm tắt cốt lõi:</p>
+              <ul class="list-disc pl-4 space-y-1 text-xs text-slate-600">
+                <li>Khái niệm cốt lõi về thị trường...</li>
+                <li>3 yếu tố ảnh hưởng trực tiếp...</li>
+                <li>Công thức tính toán biên lợi nhuận...</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FEATURES SECTION -->
+<section id="features" class="mt-20 space-y-12">
+  <div class="text-center max-w-2xl mx-auto space-y-4">
+    <h2 class="text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl">Tính năng thông minh giúp tối ưu thời gian</h2>
+    <p class="text-slate-500 text-lg">Biến những xấp tài liệu dày cộp thành kiến thức nằm lòng chỉ trong vài giây.</p>
+  </div>
+
+  <div class="grid gap-8 md:grid-cols-3">
+    <!-- Feature 1 -->
+    <div class="group bg-white rounded-2xl p-8 border border-slate-100 shadow-sm hover:shadow-xl hover:border-slate-200/60 transition-all duration-300">
+      <div class="w-12 h-12 rounded-xl bg-sky-50 text-sky-600 flex items-center justify-center mb-6 group-hover:bg-sky-600 group-hover:text-white transition-all duration-300">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke-currentColor="24" class="w-6 h-6">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25H12" />
+        </svg>
+      </div>
+      <h3 class="text-xl font-bold text-slate-900 mb-2">Tóm tắt siêu tốc</h3>
+      <p class="text-slate-600 leading-relaxed">Rút ngắn sách, bài giảng, file PDF dài hàng trăm trang thành các gạch đầu dòng cô đọng, dễ hiểu.</p>
+    </div>
+
+    <!-- Feature 2 -->
+    <div class="group bg-white rounded-2xl p-8 border border-slate-100 shadow-sm hover:shadow-xl hover:border-slate-200/60 transition-all duration-300">
+      <div class="w-12 h-12 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center mb-6 group-hover:bg-indigo-600 group-hover:text-white transition-all duration-300">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke-currentColor="24" class="w-6 h-6">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M7.5 8.25h9m-9 3H12m-9.75 1.51c0 1.6 1.123 2.994 2.707 3.227 1.129.166 2.27.293 3.423.379.35.026.67.21.865.501L12 21l2.755-4.133a1.14 1.14 0 0 1 .865-.501c1.153-.086 2.294-.213 3.423-.379 1.584-.233 2.707-1.626 2.707-3.228V6.741c0-1.602-1.123-2.995-2.707-3.228A48.394 48.394 0 0 0 12 3c-2.392 0-4.744.175-7.043.513C3.373 3.746 2.25 5.14 2.25 6.741v6.018Z" />
+        </svg>
+      </div>
+      <h3 class="text-xl font-bold text-slate-900 mb-2">Hỏi đáp trực tiếp</h3>
+      <p class="text-slate-600 leading-relaxed">Đặt bất kỳ câu hỏi nào về tài liệu. AI sẽ định vị chính xác thông tin và trả lời bạn ngay lập tức.</p>
+    </div>
+
+    <!-- Feature 3 -->
+    <div class="group bg-white rounded-2xl p-8 border border-slate-100 shadow-sm hover:shadow-xl hover:border-slate-200/60 transition-all duration-300">
+      <div class="w-12 h-12 rounded-xl bg-violet-50 text-violet-600 flex items-center justify-center mb-6 group-hover:bg-violet-600 group-hover:text-white transition-all duration-300">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke-currentColor="24" class="w-6 h-6">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 0 0 2.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 0 0-1.123-.08m-5.801 0c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 0 0 .75-.75 2.25 2.25 0 0 0-.1-.664m-5.8 0A2.251 2.251 0 0 1 13.5 2.25H15c1.03 0 1.9.693 2.166 1.638m-7.377 0A48.536 48.536 0 0 1 12 3c1.2 0 2.392.05 3.57.148m-5.061 0a48.12 48.12 0 0 0-3.413.387c-1.131.094-1.976 1.057-1.976 2.192V16.5A2.25 2.25 0 0 0 5.25 18.75h1.5m-4.5-9a2.25 2.25 0 0 1 2.25-2.25h1.5m-1.5 0H2.25A2.25 2.25 0 0 0 0 9.75v10.5A2.25 2.25 0 0 0 2.25 22.5h1.5a2.25 2.25 0 0 0 2.25-2.25V9.75Z" />
+        </svg>
+      </div>
+      <h3 class="text-xl font-bold text-slate-900 mb-2">Ôn tập thông minh</h3>
+      <p class="text-slate-600 leading-relaxed">Tự động tạo bộ Flashcards học nhanh và các bài trắc nghiệm mô phỏng đề thi thực tế.</p>
+    </div>
+  </div>
+</section>
+
+<!-- CTA SECTION -->
+<section class="mt-24 relative overflow-hidden bg-gradient-to-tr from-slate-900 via-indigo-950 to-slate-900 text-white rounded-3xl p-8 md:p-16 shadow-2xl">
+  <div class="absolute inset-0 bg-[radial-gradient(circle_at_top_right,#38bdf820,transparent_50%)]"></div>
+  <div class="relative max-w-2xl mx-auto text-center space-y-6">
+    <h3 class="text-3xl md:text-4xl font-extrabold tracking-tight">Sẵn sàng nâng tầm kết quả học tập?</h3>
+    <p class="text-slate-300 text-lg max-w-lg mx-auto">
+      Tham gia cùng hàng ngàn học sinh, sinh viên đang nâng cao hiệu suất học tập mỗi ngày. Hoàn toàn miễn phí.
+    </p>
+    <div class="pt-4">
+      <a href="/upload_doc" class="inline-flex items-center justify-center px-8 py-4 bg-white text-slate-900 font-bold rounded-xl hover:bg-slate-50 transform hover:-translate-y-0.5 transition-all duration-200 shadow-xl">
+        Bắt đầu miễn phí ngay
+      </a>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER / CONTACT -->
+<footer id="contact" class="mt-24 border-t border-slate-100 py-12 text-center text-slate-500 text-sm space-y-3">
+  <p class="font-medium text-slate-700">© 2026 AI Study Buddy. Nền tảng học tập thông minh.</p>
+  <p>Bạn có câu hỏi hoặc góp ý? Gửi email tới <a href="mailto:hello@example.com" class="text-sky-600 hover:underline font-medium">hello@example.com</a></p>
+</footer>
 {% endblock %}
