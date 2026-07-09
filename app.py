@@ -26,7 +26,7 @@ class Flashcard(db.Model):
 def index():
     return render_template('index.html')
 
-@app.route('/upload', methods=['GET', 'POST'])
+@app.route('/upload_doc', methods=['GET', 'POST'])
 def upload_doc():
     if request.method == 'POST':
         request.form.get('study_content')
