@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+
+{% block title %}Nhập tài liệu - AI Study Buddy{% endblock %}
+
+{% block content %}
+<div class="max-w-3xl mx-auto">
+  <div class="rounded-3xl bg-white p-8 shadow-xl border border-slate-200">
+    <h1 class="text-3xl font-semibold text-slate-900">Nhập tài liệu</h1>
+    <p class="mt-3 text-slate-600">Dán nội dung hoặc thả tập tin vào khung để bắt đầu.</p>
+
+    <form method="POST" class="mt-8 space-y-6">
+      <div id="dropzone" class="group rounded-3xl border-2 border-dashed border-slate-300 bg-slate-50 px-6 py-10 text-center transition hover:border-slate-400 focus-within:border-slate-500">
+        <input id="fileInput" type="file" accept=".txt,.md,.pdf,.jpg,.jpeg,.png" class="hidden" />
+        <div class="flex flex-col items-center justify-center gap-3 text-slate-500">
+          <span class="inline-flex h-14 w-14 items-center justify-center rounded-full bg-slate-100 text-slate-400 transition group-hover:bg-slate-200">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16V4m0 0L3 8m4-4l4 4m6 4v8m0 0l4-4m-4 4l-4-4" />
+            </svg>
+          </span>
+          <div>
+            <label for="fileInput" class="cursor-pointer text-lg font-semibold text-slate-700">Kéo thả tệp vào đây</label>
+            <p class="mt-2 text-sm text-slate-500">hoặc nhấp để chọn tệp TXT / MD / PDF / JPG / PNG.</p>
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <label for="study_content" class="mb-2 block text-sm font-medium text-slate-700">Nội dung tài liệu</label>
+        <textarea id="study_content" name="study_content" rows="15" placeholder="Dán nội dung ở đây..." class="w-full rounded-3xl border border-slate-300 bg-white px-4 py-4 text-slate-900 shadow-sm transition focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-100"></textarea>
+      </div>
+
+      <button type="submit" class="inline-flex items-center justify-center rounded-full bg-indigo-600 px-6 py-3 text-base font-semibold text-white shadow-lg shadow-indigo-500/20 transition hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2">Gửi tài liệu</button>
+    </form>
+  </div>
+</div>
+
+<script>
+const dropzone = document.getElementById('dropzone');
+const fileInput = document.getElementById('fileInput');
+const textarea = document.getElementById('study_content');
+
+['dragenter', 'dragover'].forEach(eventName => {
+  dropzone.addEventListener(eventName, event => {
+    event.preventDefault();
+    event.stopPropagation();
+    dropzone.classList.add('border-indigo-500', 'bg-white');
+  });
+});
+
+['dragleave', 'drop'].forEach(eventName => {
+  dropzone.addEventListener(eventName, event => {
+    event.preventDefault();
+    event.stopPropagation();
+    dropzone.classList.remove('border-indigo-500', 'bg-white');
+  });
+});
+
+dropzone.addEventListener('drop', event => {
+  const files = event.dataTransfer.files;
+  if (files.length === 0) return;
+  fileInput.files = files;
+
+  const file = files[0];
+  if (!file.type && !file.name.match(/\.(txt|md)$/i)) return;
+
+  const reader = new FileReader();
+  reader.onload = e => {
+    textarea.value = e.target.result;
+  };
+  reader.readAsText(file);
+});
+
+fileInput.addEventListener('change', () => {
+  const file = fileInput.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    textarea.value = e.target.result;
+  };
+  reader.readAsText(file);
+});
+</script>
+{% endblock %}
