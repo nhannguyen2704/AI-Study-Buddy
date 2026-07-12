@@ -29,7 +29,6 @@ def index():
 @app.route('/upload_doc', methods=['GET', 'POST'])
 def upload_doc():
     if request.method == 'POST':
-        
         flash("Tài liệu đã được tải lên thành công!", "success")
         uploaded_file = request.files.get('fileInput')
         original_text = uploaded_file.read().decode('utf-8')
