@@ -6,9 +6,9 @@ app = Flask(__name__)
 # Cấu hình SQLite
 app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///studybuddy.db"
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+app.secret_key = "key_bi_mat_cua_nhom"
 
 db = SQLAlchemy(app)
-
 
 # Model Document
 class Document(db.Model):
