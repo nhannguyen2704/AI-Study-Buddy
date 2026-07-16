@@ -6,9 +6,9 @@ app = Flask(__name__)
 # Cấu hình SQLite
 app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///studybuddy.db"
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+app.secret_key = "key_bi_mat_cua_nhom"
 
 db = SQLAlchemy(app)
-
 
 # Model Document
 class Document(db.Model):
@@ -29,12 +29,19 @@ def index():
 @app.route('/upload_doc', methods=['GET', 'POST'])
 def upload_doc():
     if request.method == 'POST':
-        request.form.get('study_content')
-        doc = Document(title="Bài học mới", original_text='study_content')
+        flash("Tài liệu đã được tải lên thành công!", "success")
+        uploaded_file = request.files.get('fileInput')
+        original_text = uploaded_file.read().decode('utf-8')
+        doc = Document(title="Bài học mới", original_text=original_text, summary_text="")
         db.session.add(doc)
         db.session.commit()
-        flash("Tài liệu đã được tải lên thành công!", "success")
+        if uploaded_file:
+            van_ban_thuan_tuy = uploaded_file.read().decode('utf-8')
+            print("Đã đọc thành công: ",van_ban_thuan_tuy[:100], "...")
+            return "Tải tài liệu thành công"
     return render_template('upload.html')
+
+
 
 if __name__ == "__main__":
     with app.app_context():
