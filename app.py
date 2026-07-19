@@ -2,7 +2,7 @@ from flask import Flask, render_template, request, flash, redirect, session, url
 from flask_sqlalchemy import SQLAlchemy
 # Thêm thư viện mã hóa mật khẩu để bảo mật tài khoản
 from werkzeug.security import generate_password_hash, check_password_hash
-
+from ai_helper import generate_summary
 app = Flask(__name__)
 
 # Cấu hình SQLite
@@ -42,22 +42,33 @@ def index():
     return render_template('index.html')
 
 @app.route('/upload_doc', methods=['GET', 'POST'])
+@app.route('/upload_doc', methods=['GET', 'POST'])
 def upload_doc():
     if 'user_id' not in session:
         flash("Bạn cần đăng nhập để sử dụng tính năng tải lên tài liệu!", "warning")
         return redirect(url_for('login'))
-        
+
     if request.method == 'POST':
-        flash("Tài liệu đã được tải lên thành công!", "success")
         uploaded_file = request.files.get('fileInput')
+
         if uploaded_file:
-            original_text = uploaded_file.read().decode('utf-8')
-            doc = Document(title="Bài học mới", original_text=original_text, summary_text="")
+            original_text = uploaded_file.read().decode("utf-8")
+
+            ai_summary = generate_summary(original_text)
+
+            doc = Document(
+                title="Bài học mới",
+                original_text=original_text,
+                summary_text=ai_summary
+            )
+
             db.session.add(doc)
             db.session.commit()
+
+            flash("Tài liệu đã được tải lên thành công!", "success")
             return "Tải tài liệu thành công"
-            
-    return render_template('upload.html')
+
+    return render_template("upload.html")
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
