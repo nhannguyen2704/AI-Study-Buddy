@@ -2,6 +2,7 @@ import os
 import google.generativeai as genai
 from dotenv import load_dotenv
 
+import json
 # Tải các biến môi trường từ file .env
 load_dotenv()
 
@@ -33,3 +34,26 @@ def generate_summary(original_text):
     except Exception as e:
         print(f"Lỗi khi gọi Gemini AI: {e}")
         return "Đã xảy ra lỗi trong quá trình AI tóm tắt văn bản."
+    import json
+
+def generate_flashcards(text):
+    model = genai.GenerativeModel("gemini-2.5-flash")
+
+    prompt = f"""
+Hãy tạo 5 flashcard từ đoạn văn sau.
+
+Chỉ trả về JSON theo đúng định dạng:
+
+[
+    {{
+        "question": "...",
+        "answer": "..."
+    }}
+]
+
+Đoạn văn:
+{text}
+"""
+
+    response = model.generate_content(prompt)
+    return json.loads(response.text)

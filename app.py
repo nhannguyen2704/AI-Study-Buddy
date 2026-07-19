@@ -3,6 +3,7 @@ from flask_sqlalchemy import SQLAlchemy
 # Thêm thư viện mã hóa mật khẩu để bảo mật tài khoản
 from werkzeug.security import generate_password_hash, check_password_hash
 from ai_helper import generate_summary
+from ai_helper import generate_summary, generate_flashcards
 app = Flask(__name__)
 
 # Cấu hình SQLite
@@ -61,11 +62,24 @@ def upload_doc():
                 summary_text=ai_summary
             )
 
-            db.session.add(doc)
-            db.session.commit()
+    db.session.add(doc)
+    db.session.commit()
 
-            flash("Tài liệu đã được tải lên thành công!", "success")
-            return "Tải tài liệu thành công"
+    # Tạo flashcard bằng AI
+    flashcards = generate_flashcards()(original_text)
+
+    for card in flashcards:
+        new_card = Flashcard(
+            question=card["question"],
+            answer=card["answer"],
+            document_id=doc.id
+        )
+        db.session.add(new_card)
+
+    db.session.commit()
+
+    flash("Tài liệu đã được tải lên thành công!", "success")
+    return "Tải tài liệu thành công"
 
     return render_template("upload.html")
 
