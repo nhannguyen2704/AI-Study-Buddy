@@ -1,5 +1,6 @@
 from flask import Flask, render_template, request, flash
 from flask_sqlalchemy import SQLAlchemy
+from ai_helper import generate_summary
 
 app = Flask(__name__)
 
@@ -26,21 +27,46 @@ class Flashcard(db.Model):
 def index():
     return render_template('index.html')
 
+
+def generate_summary(content):
+    model = ModelWrapper()
+
+    prompt = f"""
+    Hãy tóm tắt tài liệu sau trong khoảng 100 từ:
+
+    {content}
+    """
+
+    response = model.generate_content(prompt)
+    return response.text
+
+
 @app.route('/upload_doc', methods=['GET', 'POST'])
 def upload_doc():
     if request.method == 'POST':
-        flash("Tài liệu đã được tải lên thành công!", "success")
         uploaded_file = request.files.get('fileInput')
-        original_text = uploaded_file.read().decode('utf-8')
-        doc = Document(title="Bài học mới", original_text=original_text, summary_text="")
-        db.session.add(doc)
-        db.session.commit()
-        if uploaded_file:
-            van_ban_thuan_tuy = uploaded_file.read().decode('utf-8')
-            print("Đã đọc thành công: ",van_ban_thuan_tuy[:100], "...")
-            return "Tải tài liệu thành công"
-    return render_template('upload.html')
 
+        if uploaded_file:
+            # Đọc nội dung file
+            original_text = uploaded_file.read().decode('utf-8')
+
+            # Gọi AI để tóm tắt
+            ai_summary = generate_summary(original_text)
+
+            # Lưu vào database
+            doc = Document(
+                title="Bài học mới",
+                original_text=original_text,
+                summary_text=ai_summary
+            )
+
+            db.session.add(doc)
+            db.session.commit()
+
+            flash("Tài liệu đã được tải lên thành công!", "success")
+            return "Tải tài liệu thành công"
+
+    return render_template('upload.html')
 if __name__ == "__main__":
     with app.app_context():
         db.create_all()
