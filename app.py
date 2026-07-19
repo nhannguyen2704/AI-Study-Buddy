@@ -42,7 +42,6 @@ def index():
     return render_template('index.html')
 
 @app.route('/upload_doc', methods=['GET', 'POST'])
-@app.route('/upload_doc', methods=['GET', 'POST'])
 def upload_doc():
     if 'user_id' not in session:
         flash("Bạn cần đăng nhập để sử dụng tính năng tải lên tài liệu!", "warning")
