@@ -4,7 +4,7 @@ from dotenv import load_dotenv
 
 # Tải các biến môi trường từ file .env
 load_dotenv()
-
+#test
 # Lấy API Key từ biến môi trường (Bài trước đã cấu hình trong file .env)
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 
