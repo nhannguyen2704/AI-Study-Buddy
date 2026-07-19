@@ -3,6 +3,7 @@ from flask_sqlalchemy import SQLAlchemy
 # Thêm thư viện mã hóa mật khẩu để bảo mật tài khoản
 from werkzeug.security import generate_password_hash, check_password_hash
 from ai_helper import generate_summary
+
 app = Flask(__name__)
 
 # Cấu hình SQLite
@@ -13,22 +14,26 @@ app.secret_key = "key_bi_mat_cua_nhom"
 db = SQLAlchemy(app)
 
 
+# ==============================================================================
+# 1. CẬP NHẬT MODEL DATABASE
+# ==============================================================================
 
-# Model User (Đã thêm để sửa lỗi NameError)
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(100), nullable=False)
     email = db.Column(db.String(120), unique=True, nullable=False)
     password = db.Column(db.String(200), nullable=False)
+    # Định nghĩa mối quan hệ (Tùy chọn, giúp lấy danh sách tài liệu từ user dễ hơn)
+    documents = db.relationship('Document', backref='author', lazy=True)
 
-# Model Document
 class Document(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(200), nullable=False)
     original_text = db.Column(db.Text, nullable=False)
     summary_text = db.Column(db.Text)
+    # [✓] THÀNH PHẦN MỚI: Liên kết Document với User cụ thể sở hữu nó
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
 
-# Model Flashcard
 class Flashcard(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     question = db.Column(db.String(500), nullable=False)
@@ -36,38 +41,61 @@ class Flashcard(db.Model):
     document_id = db.Column(db.Integer, db.ForeignKey('document.id'), nullable=False)
 
 
+# ==============================================================================
+# 2. CÁC ROUTE XỬ LÝ
+# ==============================================================================
 
 @app.route('/')
 def index():
     return render_template('index.html')
 
-@app.route('/upload_doc', methods=['GET', 'POST'])
-def upload_doc():
+
+# [✓] CẬP NHẬT ROUTE UPLOAD: Đổi tên thành /upload để khớp với form HTML cũ
+@app.route('/upload', methods=['GET', 'POST'])
+def upload():
+    # [✓] KIỂM TRA QUYỀN TRUY CẬP: Chặn người dùng vãng lai
     if 'user_id' not in session:
         flash("Bạn cần đăng nhập để sử dụng tính năng tải lên tài liệu!", "warning")
         return redirect(url_for('login'))
 
     if request.method == 'POST':
+        original_text = ""
         uploaded_file = request.files.get('fileInput')
 
-        if uploaded_file:
-            original_text = uploaded_file.read().decode("utf-8")
+        # Xử lý nếu người dùng tải file lên
+        if uploaded_file and uploaded_file.filename != '':
+            raw_bytes = uploaded_file.read()
+            try:
+                original_text = raw_bytes.decode("utf-8")
+            except UnicodeDecodeError:
+                original_text = raw_bytes.decode("utf-8-sig")
+        else:
+            # Nếu không có file, thử lấy nội dung từ ô Textarea nhập tay
+            original_text = request.form.get('study_content', '')
 
+        # Kiểm tra nội dung có rỗng hay không trước khi gọi AI
+        if original_text.strip():
             ai_summary = generate_summary(original_text)
 
+            # [✓] CẬP NHẬT LƯU VÀO DB: Gắn kèm user_id lấy từ phiên đăng nhập (session)
             doc = Document(
                 title="Bài học mới",
                 original_text=original_text,
-                summary_text=ai_summary
+                summary_text=ai_summary,
+                user_id=session['user_id'] 
             )
 
             db.session.add(doc)
             db.session.commit()
 
-            flash("Tài liệu đã được tải lên thành công!", "success")
-            return "Tải tài liệu thành công"
+            flash("Tài liệu đã được tải lên và tóm tắt thành công!", "success")
+            return redirect(url_for('upload'))
+        else:
+            flash("Vui lòng cung cấp nội dung tài liệu hoặc tải tệp lên!", "warning")
+            return redirect(url_for('upload'))
 
     return render_template("upload.html")
+
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
@@ -76,16 +104,13 @@ def register():
         email = request.form.get('email')
         password = request.form.get('password')
         
-        # Kiểm tra trùng lặp email
         user_exists = User.query.filter_by(email=email).first()
         if user_exists:
             flash("Email này đã được đăng ký trước đó rồi!", "warning")
             return redirect(url_for('register'))
             
-        # Mã hóa mật khẩu an toàn
         hashed_password = generate_password_hash(password, method='pbkdf2:sha256')
         
-        # Lưu thông tin tài khoản vào database
         new_user = User(username=username, email=email, password=hashed_password)
         db.session.add(new_user)
         db.session.commit()
@@ -95,19 +120,18 @@ def register():
         
     return render_template('register.html')
 
+
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
         email = request.form.get('email')
         password = request.form.get('password')
         
-        # Tìm tài khoản theo email
         user = User.query.filter_by(email=email).first()
         
-        # Xác thực tài khoản và kiểm tra mật khẩu đã mã hóa
         if user and check_password_hash(user.password, password):
             session['user_id'] = user.id
-            session['username'] = user.username # Lưu lại tên hiển thị lên giao diện
+            session['username'] = user.username 
             
             flash(f"Đăng nhập thành công! Chào mừng {user.username} quay trở lại.", "success")
             return redirect(url_for('index'))
@@ -117,9 +141,10 @@ def login():
             
     return render_template('login.html')
 
+
 @app.route('/logout')
 def logout():
-    session.clear() # Xóa sạch trạng thái phiên đăng nhập
+    session.clear() 
     flash("Bạn đã đăng xuất thành công.", "info")
     return redirect(url_for('index'))
 
