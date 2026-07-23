@@ -52,7 +52,7 @@ def index():
 
 
 @app.route('/upload_doc', methods=['GET', 'POST'])
-def upload():
+def upload_doc():
     # Kiểm tra đăng nhập
     if 'user_id' not in session:
         flash("Bạn cần đăng nhập để sử dụng tính năng tải lên tài liệu!", "warning")
@@ -163,6 +163,16 @@ def logout():
     session.clear() 
     flash("Bạn đã đăng xuất thành công.", "info")
     return redirect(url_for('index'))
+
+@app.route('/dashboard')
+def dashboard():
+    if 'user_id' not in session:
+        flash("Vui lòng đăng nhập để truy cập trang chủ!", "warning")
+        return redirect(url_for('login'))
+        
+    # Lấy toàn bộ tài liệu thuộc về người dùng đang đăng nhập
+    user_docs = Document.query.filter_by(user_id=session['user_id']).all()
+    return render_template('dashboard.html', documents=user_docs)
 
 
 if __name__ == "__main__":
