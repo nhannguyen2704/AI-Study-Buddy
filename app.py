@@ -150,6 +150,16 @@ def login():
             
     return render_template('login.html')
 
+
+@app.route("/document/<int:id>")
+def detail(id):
+    if "user_id" not in session:
+        return redirect(url_for("login"))
+
+    doc = Document.query.get_or_404(id)
+    return render_template("detail.html", doc=doc)
+
+
 @app.route('/logout')
 def logout():
     session.clear() # Xóa sạch trạng thái phiên đăng nhập

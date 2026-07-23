@@ -1,0 +1,14 @@
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    {% for doc in documents %}
+    <div class="bg-white rounded-xl shadow-md p-6">
+        <h2 class="text-xl font-semibold truncate">
+            {{ doc.title }}
+        </h2>
+
+        <a href="{{ url_for('detail', id=doc.id) }}"
+           class="inline-block mt-4 text-blue-600 hover:text-blue-800">
+            →
+        </a>
+    </div>
+    {% endfor %}
+</div>
