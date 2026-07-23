@@ -8,7 +8,7 @@ from ai_helper import generate_summary
 from ai_helper import generate_summary, generate_flashcards
 
 app = Flask(__name__)
-documents = Document.query.filter_by(user_id=session['user_id']).all()
+
 # Cấu hình SQLite
 app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///studybuddy.db"
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
@@ -156,6 +156,7 @@ def logout():
     flash("Bạn đã đăng xuất thành công.", "info")
     return redirect(url_for('index'))
 
+document = Document.query.filter_by(user_id=session['user_id']).all()
 
 if __name__ == "__main__":
     with app.app_context():
