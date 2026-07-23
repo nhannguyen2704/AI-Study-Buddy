@@ -2,7 +2,8 @@ from flask import Flask, render_template, request, flash, redirect, session, url
 from flask_sqlalchemy import SQLAlchemy
 # Thêm thư viện mã hóa mật khẩu để bảo mật tài khoản
 from werkzeug.security import generate_password_hash, check_password_hash
-from ai_helper import generate_summary
+# [✓] CẬP NHẬT: Import thêm hàm generate_flashcards từ ai_helper
+from ai_helper import generate_summary, generate_flashcards
 
 app = Flask(__name__)
 
@@ -15,7 +16,7 @@ db = SQLAlchemy(app)
 
 
 # ==============================================================================
-# 1. CẬP NHẬT MODEL DATABASE
+# 1. MODEL DATABASE
 # ==============================================================================
 
 class User(db.Model):
@@ -23,7 +24,6 @@ class User(db.Model):
     username = db.Column(db.String(100), nullable=False)
     email = db.Column(db.String(120), unique=True, nullable=False)
     password = db.Column(db.String(200), nullable=False)
-    # Định nghĩa mối quan hệ (Tùy chọn, giúp lấy danh sách tài liệu từ user dễ hơn)
     documents = db.relationship('Document', backref='author', lazy=True)
 
 class Document(db.Model):
@@ -31,8 +31,9 @@ class Document(db.Model):
     title = db.Column(db.String(200), nullable=False)
     original_text = db.Column(db.Text, nullable=False)
     summary_text = db.Column(db.Text)
-    # [✓] THÀNH PHẦN MỚI: Liên kết Document với User cụ thể sở hữu nó
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    # Mối quan hệ giúp lấy danh sách flashcards của tài liệu dễ dàng
+    flashcards = db.relationship('Flashcard', backref='document', lazy=True)
 
 class Flashcard(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -50,10 +51,9 @@ def index():
     return render_template('index.html')
 
 
-# [✓] CẬP NHẬT ROUTE UPLOAD: Đổi tên thành /upload để khớp với form HTML cũ
-@app.route('/upload', methods=['GET', 'POST'])
+@app.route('/upload_doc', methods=['GET', 'POST'])
 def upload():
-    # [✓] KIỂM TRA QUYỀN TRUY CẬP: Chặn người dùng vãng lai
+    # Kiểm tra đăng nhập
     if 'user_id' not in session:
         flash("Bạn cần đăng nhập để sử dụng tính năng tải lên tài liệu!", "warning")
         return redirect(url_for('login'))
@@ -70,14 +70,14 @@ def upload():
             except UnicodeDecodeError:
                 original_text = raw_bytes.decode("utf-8-sig")
         else:
-            # Nếu không có file, thử lấy nội dung từ ô Textarea nhập tay
+            # Nếu không có file, lấy nội dung từ ô Textarea
             original_text = request.form.get('study_content', '')
 
-        # Kiểm tra nội dung có rỗng hay không trước khi gọi AI
         if original_text.strip():
+            # 1. Tóm tắt tài liệu bằng Gemini AI
             ai_summary = generate_summary(original_text)
 
-            # [✓] CẬP NHẬT LƯU VÀO DB: Gắn kèm user_id lấy từ phiên đăng nhập (session)
+            # 2. Lưu thông tin Document vào DB
             doc = Document(
                 title="Bài học mới",
                 original_text=original_text,
@@ -86,9 +86,25 @@ def upload():
             )
 
             db.session.add(doc)
-            db.session.commit()
+            db.session.commit() # Commit trước để khởi tạo doc.id
 
-            flash("Tài liệu đã được tải lên và tóm tắt thành công!", "success")
+            # 3. [✓] MỚI: Gọi AI sinh danh sách Flashcards (dạng JSON)
+            flashcards_list = generate_flashcards(original_text)
+
+            # 4. [✓] MỚI: Duyệt vòng lặp lưu các Flashcard vào Database
+            if flashcards_list:
+                for item in flashcards_list:
+                    if 'question' in item and 'answer' in item:
+                        card = Flashcard(
+                            question=item['question'],
+                            answer=item['answer'],
+                            document_id=doc.id
+                        )
+                        db.session.add(card)
+                
+                db.session.commit() # Commit tất cả các thẻ ghi nhớ vào DB
+
+            flash("Tài liệu đã được tóm tắt và tạo bộ Flashcard thành công!", "success")
             return redirect(url_for('upload'))
         else:
             flash("Vui lòng cung cấp nội dung tài liệu hoặc tải tệp lên!", "warning")
