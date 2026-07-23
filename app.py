@@ -1,11 +1,14 @@
+from xml.dom.xmlbuilder import DocumentLS
+
 from flask import Flask, render_template, request, flash, redirect, session, url_for
 from flask_sqlalchemy import SQLAlchemy
 # Thêm thư viện mã hóa mật khẩu để bảo mật tài khoản
 from werkzeug.security import generate_password_hash, check_password_hash
 from ai_helper import generate_summary
 from ai_helper import generate_summary, generate_flashcards
-app = Flask(__name__)
 
+app = Flask(__name__)
+documents = Document.query.filter_by(user_id=session['user_id']).all()
 # Cấu hình SQLite
 app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///studybuddy.db"
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
@@ -29,6 +32,8 @@ class Document(db.Model):
     original_text = db.Column(db.Text, nullable=False)
     summary_text = db.Column(db.Text)
 
+    # Thêm dòng này
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
 # Model Flashcard
 class Flashcard(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -41,6 +46,19 @@ class Flashcard(db.Model):
 @app.route('/')
 def index():
     return render_template('index.html')
+
+@app.route('/dashboard')
+def dashboard():
+    # Kiểm tra đăng nhập
+    if 'user_id' not in session:
+        flash('Vui lòng đăng nhập trước.')
+        return redirect(url_for('login'))
+
+    # Lấy danh sách tài liệu của user hiện tại
+    documents = Document.query.filter_by(user_id=session['user_id']).all()
+
+    # Hiển thị dashboard
+    return render_template('dashboard.html', documents=documents)
 
 @app.route('/upload_doc', methods=['GET', 'POST'])
 def upload_doc():
@@ -59,27 +77,28 @@ def upload_doc():
             doc = Document(
                 title="Bài học mới",
                 original_text=original_text,
-                summary_text=ai_summary
+                summary_text=ai_summary,
+                user_id=session["user_id"]
             )
 
-    db.session.add(doc)
-    db.session.commit()
+            db.session.add(doc)
+            db.session.commit()
 
-    # Tạo flashcard bằng AI
-    flashcards = generate_flashcards()(original_text)
+            # Tạo flashcard bằng AI
+            flashcards = generate_flashcards(original_text)
 
-    for card in flashcards:
-        new_card = Flashcard(
-            question=card["question"],
-            answer=card["answer"],
-            document_id=doc.id
-        )
-        db.session.add(new_card)
+            for card in flashcards:
+                new_card = Flashcard(
+                    question=card["question"],
+                    answer=card["answer"],
+                    document_id=doc.id
+                )
+                db.session.add(new_card)
 
-    db.session.commit()
+            db.session.commit()
 
-    flash("Tài liệu đã được tải lên thành công!", "success")
-    return "Tải tài liệu thành công"
+            flash("Tài liệu đã được tải lên thành công!", "success")
+            return redirect(url_for("dashboard"))
 
     return render_template("upload.html")
 
@@ -124,7 +143,7 @@ def login():
             session['username'] = user.username # Lưu lại tên hiển thị lên giao diện
             
             flash(f"Đăng nhập thành công! Chào mừng {user.username} quay trở lại.", "success")
-            return redirect(url_for('index'))
+            return redirect(url_for('dashboard'))
         else:
             flash("Email hoặc mật khẩu không đúng. Vui lòng kiểm tra lại!", "danger")
             return redirect(url_for('login'))
