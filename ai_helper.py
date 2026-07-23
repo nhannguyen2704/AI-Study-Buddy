@@ -21,14 +21,21 @@ def generate_summary(original_text):
     if not original_text or not original_text.strip():
         return "Không có nội dung để tóm tắt."
     try:
-        # Sử dụng mô hình gemini-2.5-flash để tóm tắt tối ưu nhất
         model = genai.GenerativeModel("gemini-2.5-flash")
         
-        prompt = (
-            "Hãy đóng vai là một trợ lý học tập thông minh. "
-            "Đọc và tóm tắt ngắn gọn, đọng lại các ý chính của văn bản sau bằng Tiếng Việt:\n\n"
-            f"{original_text}"
-        )
+        # [✓] CẬP NHẬT PROMPT KHẮT KHE ĐÚNG CHECKLIST
+        prompt = f"""
+        Bạn là một gia sư tận tâm và thông minh.
+        Hãy đọc và tóm tắt nội dung văn bản dưới đây theo các quy tắc khắt khe sau:
+        1. Bắt buộc trình bày dưới dạng các gạch đầu dòng (-) ngắn gọn, súc tích.
+        2. Giới hạn độ dài tóm tắt trong khoảng 100 đến 150 từ.
+        3. Tập trung vào các khái niệm và kiến thức cốt lõi nhất để học sinh dễ nhớ.
+
+        Văn bản gốc:
+        \"\"\"
+        {original_text}
+        \"\"\"
+        """
         
         response = model.generate_content(prompt)
         return response.text
@@ -36,7 +43,6 @@ def generate_summary(original_text):
     except Exception as e:
         print(f"Lỗi khi gọi Gemini AI: {e}")
         return "Đã xảy ra lỗi trong quá trình AI tóm tắt văn bản."
-
 
 def generate_flashcards(text):
     """
