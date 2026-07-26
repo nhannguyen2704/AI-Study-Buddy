@@ -34,26 +34,42 @@ def generate_summary(original_text):
     except Exception as e:
         print(f"Lỗi khi gọi Gemini AI: {e}")
         return "Đã xảy ra lỗi trong quá trình AI tóm tắt văn bản."
-    import json
+
 
 def generate_flashcards(text):
     model = genai.GenerativeModel("gemini-2.5-flash")
 
     prompt = f"""
-Hãy tạo 5 flashcard từ đoạn văn sau.
+Bạn là AI tạo flashcard học tập.
 
-Chỉ trả về JSON theo đúng định dạng:
+Hãy chỉ trả về một JSON Array hợp lệ, không giải thích, không markdown, không thêm chữ nào khác.
+
+Ví dụ:
 
 [
     {{
-        "question": "...",
-        "answer": "..."
+        "question": "Python là gì?",
+        "answer": "Một ngôn ngữ lập trình."
+    }},
+    {{
+        "question": "Flask dùng để làm gì?",
+        "answer": "Xây dựng ứng dụng web bằng Python."
     }}
 ]
 
-Đoạn văn:
+Hãy tạo 5 flashcard từ đoạn văn sau:
+
 {text}
 """
 
     response = model.generate_content(prompt)
-    return json.loads(response.text)
+
+    # Làm sạch chuỗi AI trả về
+    clean_text = (
+        response.text
+        .replace("```json", "")
+        .replace("```", "")
+        .strip()
+    )
+
+    return json.loads(clean_text)
