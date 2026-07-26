@@ -22,13 +22,17 @@
       <div class="flex items-center gap-6">
         {% if session.get('user_id') %}
           <!-- Menu cho người dùng ĐÃ đăng nhập -->
-          <a href="{{ url_for('dashboard') }}" 
+          <a href="{{ url_for('index') }}" 
              class="text-slate-600 hover:text-indigo-600 font-medium text-sm transition">
             Trang chủ
           </a>
           <a href="{{ url_for('upload_doc') }}" 
              class="text-slate-600 hover:text-indigo-600 font-medium text-sm transition">
             Tải tài liệu
+          </a>
+          <a href="{{ url_for('dashboard') }}" 
+             class="text-slate-600 hover:text-indigo-600 font-medium text-sm transition">
+            Bài học
           </a>
 
           <div class="h-4 w-[1px] bg-slate-200"></div>
