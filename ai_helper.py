@@ -64,7 +64,7 @@ def generate_flashcards(text):
         {text}
         \"\"\"
 
-        YÊU CẦU ĐỊNH DẠNG BẮT BỤC:
+        YÊU CẦU ĐỊNH DẠNG BẮT BUỘC:
         - Chỉ trả về một mảng JSON thuần túy (JSON array).
         - KHÔNG chèn thêm bất kỳ đoạn văn bản giải thích, ký tự thừa hay khối định dạng Markdown (như ```json ... ```).
         - Mỗi phần tử trong mảng là một đối tượng chứa đúng 2 key: "question" và "answer".
