@@ -22,7 +22,7 @@ def generate_summary(original_text):
     if not original_text or not original_text.strip():
         return "Không có nội dung để tóm tắt."
     try:
-        model = genai.GenerativeModel("gemini-2.5-flash")
+        model = genai.GenerativeModel("gemini-1.5-flash")
         
         # [✓] CẬP NHẬT PROMPT KHẮT KHE ĐÚNG CHECKLIST
         prompt = f"""
