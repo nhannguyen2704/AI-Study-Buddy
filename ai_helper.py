@@ -4,15 +4,16 @@ import re
 import google.generativeai as genai
 from dotenv import load_dotenv
 
-import json
 # Tải các biến môi trường từ file .env
 load_dotenv()
 
 # Lấy API Key từ biến môi trường
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 
-# Cấu hình API Key cho Gemini AI
-genai.configure(api_key=GEMINI_API_KEY)
+if not GEMINI_API_KEY:
+    print("⚠️ CẢNH BÁO: Chưa tìm thấy GEMINI_API_KEY trong file .env!")
+else:
+    genai.configure(api_key=GEMINI_API_KEY)
 
 
 def generate_summary(original_text):
@@ -24,7 +25,6 @@ def generate_summary(original_text):
     try:
         model = genai.GenerativeModel("gemini-1.5-flash")
         
-        # [✓] CẬP NHẬT PROMPT KHẮT KHE ĐÚNG CHECKLIST
         prompt = f"""
         Bạn là một gia sư tận tâm và thông minh.
         Hãy đọc và tóm tắt nội dung văn bản dưới đây theo các quy tắc khắt khe sau:
@@ -42,8 +42,9 @@ def generate_summary(original_text):
         return response.text
         
     except Exception as e:
-        print(f"Lỗi khi gọi Gemini AI: {e}")
+        print(f"Lỗi khi gọi Gemini AI tóm tắt: {e}")
         return "Đã xảy ra lỗi trong quá trình AI tóm tắt văn bản."
+
 
 def generate_flashcards(text):
     """
@@ -53,7 +54,7 @@ def generate_flashcards(text):
         return []
 
     try:
-        model = genai.GenerativeModel("gemini-2.5-flash")
+        model = genai.GenerativeModel("gemini-1.5-flash")
         
         prompt = f"""
         Bạn là một trợ lý học tập thông minh.
@@ -76,15 +77,17 @@ def generate_flashcards(text):
         ]
         """
 
-        response = model.generate_content(prompt)
+        response = model.generate_content(
+            prompt,
+            generation_config={"response_mime_type": "application/json"}
+        )
         raw_text = response.text.strip()
 
-        # Làm sạch chuỗi JSON phòng trường hợp AI tự động bọc thẻ ```json ... ```
+        # Làm sạch chuỗi JSON phòng trường hợp AI tự động bọc thẻ markdown
         if raw_text.startswith("```"):
             raw_text = re.sub(r"^```(?:json)?\n?", "", raw_text)
             raw_text = re.sub(r"\n?```$", "", raw_text)
 
-        # Bóc tách dữ liệu chuỗi JSON thành Python list/dict
         flashcards_data = json.loads(raw_text.strip())
 
         if isinstance(flashcards_data, list):
@@ -93,7 +96,6 @@ def generate_flashcards(text):
 
     except json.JSONDecodeError as e:
         print(f"Lỗi bóc tách JSON từ Gemini: {e}")
-        print("Dữ liệu thô AI trả về:", raw_text)
         return []
     except Exception as e:
         print(f"Lỗi khi gọi Gemini AI tạo flashcards: {e}")
