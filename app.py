@@ -74,41 +74,53 @@ def upload_doc():
             original_text = request.form.get('study_content', '')
 
         if original_text.strip():
-            # 1. Tóm tắt tài liệu bằng Gemini AI
-            ai_summary = generate_summary(original_text)
+            # [✓] BỌC TOÀN BỘ QUY TRÌNH GỌI AI & LƯU DB VÀO TRY-EXCEPT
+            try:
+                # 1. Tóm tắt tài liệu bằng Gemini AI
+                ai_summary = generate_summary(original_text)
 
-            # 2. Lưu thông tin Document vào DB
-            doc = Document(
-                title="Bài học mới",
-                original_text=original_text,
-                summary_text=ai_summary,
-                user_id=session['user_id'] 
-            )
+                # 2. Lưu thông tin Document vào DB
+                doc = Document(
+                    title="Bài học mới",
+                    original_text=original_text,
+                    summary_text=ai_summary,
+                    user_id=session['user_id'] 
+                )
 
-            db.session.add(doc)
-            db.session.commit() # Commit trước để khởi tạo doc.id
+                db.session.add(doc)
+                db.session.commit() # Commit trước để lấy doc.id
 
-            # 3. [✓] MỚI: Gọi AI sinh danh sách Flashcards (dạng JSON)
-            flashcards_list = generate_flashcards(original_text)
+                # 3. Gọi AI sinh danh sách Flashcards (dạng JSON)
+                flashcards_list = generate_flashcards(original_text)
 
-            # 4. [✓] MỚI: Duyệt vòng lặp lưu các Flashcard vào Database
-            if flashcards_list:
-                for item in flashcards_list:
-                    if 'question' in item and 'answer' in item:
-                        card = Flashcard(
-                            question=item['question'],
-                            answer=item['answer'],
-                            document_id=doc.id
-                        )
-                        db.session.add(card)
+                # 4. Duyệt vòng lặp lưu các Flashcard vào Database
+                if flashcards_list and isinstance(flashcards_list, list):
+                    for item in flashcards_list:
+                        if isinstance(item, dict) and 'question' in item and 'answer' in item:
+                            card = Flashcard(
+                                question=item['question'],
+                                answer=item['answer'],
+                                document_id=doc.id
+                            )
+                            db.session.add(card)
+                    
+                    db.session.commit() # Commit các thẻ ghi nhớ vào DB
+
+                flash("Tài liệu đã được tóm tắt và tạo bộ Flashcard thành công!", "success")
+                return redirect(url_for('upload_doc'))
+
+            except Exception as e:
+                # Nếu có lỗi (AI sập, vỡ định dạng JSON, lỗi DB...), rollback lại DB để tránh rác
+                db.session.rollback()
+                print(f"Lỗi hệ thống khi xử lý AI / DB: {e}")
                 
-                db.session.commit() # Commit tất cả các thẻ ghi nhớ vào DB
+                # Bắt lỗi theo đúng yêu cầu checklist
+                flash("Có lỗi khi AI xử lý, vui lòng thử lại sau!", "error")
+                return redirect(url_for('upload_doc'))
 
-            flash("Tài liệu đã được tóm tắt và tạo bộ Flashcard thành công!", "success")
-            return redirect(url_for('upload'))
         else:
             flash("Vui lòng cung cấp nội dung tài liệu hoặc tải tệp lên!", "warning")
-            return redirect(url_for('upload'))
+            return redirect(url_for('upload_doc'))
 
     return render_template("upload.html")
 
