@@ -8,9 +8,11 @@
     <h1 class="text-3xl font-semibold text-slate-900">Nhập tài liệu</h1>
     <p class="mt-3 text-slate-600">Dán nội dung hoặc thả tập tin vào khung để bắt đầu.</p>
 
-    <form method="POST" class="mt-8 space-y-6">
+    <!-- [✓] ĐÃ THÊM: enctype="multipart/form-data" để gửi file về Flask -->
+    <form method="POST" enctype="multipart/form-data" class="mt-8 space-y-6">
       <div id="dropzone" class="group rounded-3xl border-2 border-dashed border-slate-300 bg-slate-50 px-6 py-10 text-center transition hover:border-slate-400 focus-within:border-slate-500">
-        <input id="fileInput" type="file" accept=".txt,.md,.pdf,.jpg,.jpeg,.png" class="hidden" />
+        <!-- [✓] ĐÃ THÊM: name="fileInput" -->
+        <input id="fileInput" name="fileInput" type="file" accept=".txt,.md,.pdf,.jpg,.jpeg,.png" class="hidden" />
         <div class="flex flex-col items-center justify-center gap-3 text-slate-500">
           <span class="inline-flex h-14 w-14 items-center justify-center rounded-full bg-slate-100 text-slate-400 transition group-hover:bg-slate-200">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -35,52 +37,112 @@
 </div>
 
 <script>
-const dropzone = document.getElementById('dropzone');
-const fileInput = document.getElementById('fileInput');
-const textarea = document.getElementById('study_content');
-
-['dragenter', 'dragover'].forEach(eventName => {
-  dropzone.addEventListener(eventName, event => {
-    event.preventDefault();
-    event.stopPropagation();
-    dropzone.classList.add('border-indigo-500', 'bg-white');
+  const dropzone = document.getElementById('dropzone');
+  const fileInput = document.getElementById('fileInput');
+  const textarea = document.getElementById('study_content');
+  
+  // Hàm chuyển đổi JSON / Văn bản mã hóa thành văn bản thuần tiếng Việt
+  function extractPureVietnameseText(rawContent) {
+    if (!rawContent) return '';
+  
+    let trimmed = rawContent.trim();
+  
+    // 1. Nếu nội dung nạp vào là dạng JSON
+    if ((trimmed.startsWith('{') && trimmed.endsWith('}')) || (trimmed.startsWith('[') && trimmed.endsWith(']'))) {
+      try {
+        const parsed = JSON.parse(trimmed);
+        return parseJsonToText(parsed);
+      } catch (e) {
+        // Nếu không parse được JSON chuẩn thì xử lý như chuỗi thường
+      }
+    }
+  
+    // 2. Nếu là văn bản thuần thường
+    return cleanControlChars(trimmed);
+  }
+  
+  // Hàm đệ quy duyệt qua các Object/Array trong JSON để rút chữ ra
+  function parseJsonToText(data) {
+    if (typeof data === 'string') {
+      return data;
+    }
+    if (typeof data === 'number' || typeof data === 'boolean') {
+      return String(data);
+    }
+    if (Array.isArray(data)) {
+      return data.map(item => parseJsonToText(item)).filter(Boolean).join('\n');
+    }
+    if (typeof data === 'object' && data !== null) {
+      let result = [];
+      for (let key in data) {
+        // Bỏ qua các key hệ thống không cần thiết nếu có
+        let val = parseJsonToText(data[key]);
+        if (val) result.push(val);
+      }
+      return result.join('\n');
+    }
+    return '';
+  }
+  
+  // Hàm lọc bỏ ký tự rác hệ thống
+  function cleanControlChars(text) {
+    return text.replace(/[\x00-\x09\x0B\x0C\x0E-\x1F\x7F]/g, '');
+  }
+  
+  ['dragenter', 'dragover'].forEach(eventName => {
+    dropzone.addEventListener(eventName, event => {
+      event.preventDefault();
+      event.stopPropagation();
+      dropzone.classList.add('border-indigo-500', 'bg-white');
+    });
   });
-});
-
-['dragleave', 'drop'].forEach(eventName => {
-  dropzone.addEventListener(eventName, event => {
-    event.preventDefault();
-    event.stopPropagation();
-    dropzone.classList.remove('border-indigo-500', 'bg-white');
+  
+  ['dragleave', 'drop'].forEach(eventName => {
+    dropzone.addEventListener(eventName, event => {
+      event.preventDefault();
+      event.stopPropagation();
+      dropzone.classList.remove('border-indigo-500', 'bg-white');
+    });
   });
-});
-
-dropzone.addEventListener('drop', event => {
-  console.log('File dropped');
-  const files = event.dataTransfer.files;
-  if (files.length === 0) return;
-  fileInput.files = files;
-
-  const file = files[0];
-  if (!file.type && !file.name.match(/\.(txt|md)$/i)) return;
-
-  const reader = new FileReader();
-  reader.onload = e => {
-    const fileName = file.name;
-    dropzone.innerHTML = `<p class="text-slate-700 font-medium">Tệp đã chọn: ${fileName}</p>`;
-  };
-  reader.readAsText(file);
-});
-
-fileInput.addEventListener('change', () => {
-  const file = fileInput.files[0];
-  if (!file) return;
-  const reader = new FileReader();
-  reader.onload = e => {
-    
-    textarea.value = e.target.result;
-  };
-  reader.readAsText(file);
-});
-</script>
+  
+  dropzone.addEventListener('drop', event => {
+    event.preventDefault();
+    const files = event.dataTransfer.files;
+    if (files.length === 0) return;
+    fileInput.files = files;
+  
+    processFile(files[0]);
+  });
+  
+  fileInput.addEventListener('change', () => {
+    const file = fileInput.files[0];
+    if (!file) return;
+  
+    processFile(file);
+  });
+  
+  function processFile(file) {
+    const reader = new FileReader();
+  
+    reader.onload = e => {
+      const rawResult = e.target.result;
+      
+      // 🟢 Chuyển đổi và trích xuất văn bản thuần tiếng Việt
+      const pureVietnameseText = extractPureVietnameseText(rawResult);
+      
+      // Đổ vào textarea
+      textarea.value = pureVietnameseText;
+  
+      // Cập nhật giao diện Dropzone
+      dropzone.innerHTML = `
+        <div class="flex flex-col items-center justify-center gap-1">
+          <p class="text-indigo-600 font-semibold text-lg">📄 ${file.name}</p>
+          <p class="text-xs text-slate-400">Đã trích xuất văn bản thuần thành công!</p>
+        </div>
+      `;
+    };
+  
+    reader.readAsText(file, 'UTF-8');
+  }
+  </script>
 {% endblock %}
