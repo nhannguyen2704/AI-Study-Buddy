@@ -110,12 +110,11 @@ def upload_doc():
                 return redirect(url_for('upload_doc'))
 
             except Exception as e:
-                # Nếu có lỗi (AI sập, vỡ định dạng JSON, lỗi DB...), rollback lại DB để tránh rác
-                db.session.rollback()
-                print(f"Lỗi hệ thống khi xử lý AI / DB: {e}")
+                db.session.rollback() # Khôi phục lại trạng thái DB
+                print(f"Lỗi hệ thống chi tiết: {e}") # In ra Terminal
                 
-                # Bắt lỗi theo đúng yêu cầu checklist
-                flash("Có lỗi khi AI xử lý, vui lòng thử lại sau!", "error")
+                # 🟢 IN NGUYÊN VĂN LỖI LÊN MÀN HÌNH ĐỂ DEBUG
+                flash(f"Lỗi AI / DB chi tiết: {str(e)}", "error")
                 return redirect(url_for('upload_doc'))
 
         else:
