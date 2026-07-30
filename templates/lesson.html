@@ -1,0 +1,64 @@
+{% extends 'base.html' %}
+
+{% block title %}Chi tiết bài học - AI Study Buddy{% endblock %}
+
+{% block content %}
+<div class="max-w-6xl mx-auto px-4 py-8">
+    
+    <!-- Tiêu đề và nút điều hướng -->
+    <div class="mb-10 flex items-center justify-between">
+        <div>
+            <!-- Giả sử bạn truyền biến document từ route vào -->
+            <h1 class="text-3xl font-extrabold text-slate-800">{{ document.title|default("Bộ Flashcard ôn tập") }}</h1>
+            <p class="text-slate-500 mt-2">Nhấp vào thẻ để kiểm tra trí nhớ của bạn!</p>
+        </div>
+        <a href="{{ url_for('dashboard') }}" class="text-sm font-semibold text-indigo-600 bg-indigo-50 px-4 py-2 rounded-xl hover:bg-indigo-100 transition">
+            &larr; Về danh sách bài học
+        </a>
+    </div>
+
+    <!-- [x] 1. Lưới Grid chứa các thẻ -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+        
+        <!-- Vòng lặp lấy danh sách flashcards từ database -->
+        {% for card in document.flashcards %}
+        
+        <!-- [x] 2. Thiết kế Card: Bo góc (rounded-3xl), Bóng đổ (shadow-lg), Màu nền nổi bật -->
+        <div class="group relative bg-white border border-slate-100 rounded-3xl p-6 h-72 shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-[0_8px_30px_rgb(99,102,241,0.15)] hover:border-indigo-200 transition-all duration-300 cursor-pointer flex flex-col justify-between overflow-hidden">
+            
+            <!-- Lớp phủ màu nền gradient nhẹ xuất hiện khi Hover -->
+            <div class="absolute inset-0 bg-gradient-to-br from-indigo-50/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-0"></div>
+
+            <!-- Header nhỏ của thẻ -->
+            <div class="relative z-10 flex justify-between items-center w-full mb-4">
+                <span class="text-xs font-bold text-slate-300 group-hover:text-indigo-300 transition-colors uppercase tracking-wider">
+                    Thẻ #{{ loop.index }}
+                </span>
+                <span class="w-8 h-8 rounded-full bg-slate-50 flex items-center justify-center text-slate-400 group-hover:bg-indigo-100 group-hover:text-indigo-600 transition-colors">
+                    💡
+                </span>
+            </div>
+
+            <!-- [x] 3. Biến {{ card.question }} lớn, căn giữa -->
+            <div class="relative z-10 flex-grow flex items-center justify-center w-full px-2">
+                <h3 class="text-2xl font-bold text-slate-800 text-center leading-snug group-hover:text-indigo-900 transition-colors line-clamp-4">
+                    {{ card.question }}
+                </h3>
+            </div>
+
+            <!-- [x] 3. Dòng chữ nhỏ "Click để xem đáp án" -->
+            <div class="relative z-10 mt-4 pt-4 border-t border-slate-100/80 w-full text-center">
+                <span class="text-sm font-medium text-slate-400 flex items-center justify-center gap-2 group-hover:text-indigo-500 transition-colors">
+                    <svg class="w-4 h-4 animate-bounce" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5M7.188 2.239l.777 2.897M5.136 7.965l-2.898-.777M13.95 4.05l-2.122 2.122m-5.657 5.656l-2.12 2.122"></path>
+                    </svg>
+                    Click để xem đáp án
+                </span>
+            </div>
+
+        </div>
+        {% endfor %}
+
+    </div>
+</div>
+{% endblock %}

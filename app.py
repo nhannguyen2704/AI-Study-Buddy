@@ -186,7 +186,24 @@ def dashboard():
     user_docs = Document.query.filter_by(user_id=session['user_id']).all()
     return render_template('dashboard.html', documents=user_docs)
 
+@app.route('/lesson/<int:doc_id>')
+def view_lesson(doc_id):
+    if 'user_id' not in session:
+        flash("Vui lòng đăng nhập để xem bài học!", "warning")
+        return redirect(url_for('login'))
+        
+    document = Document.query.get_or_404(doc_id)
+    
+    if document.user_id != session['user_id']:
+        flash("Bạn không có quyền xem bài học này!", "danger")
+        return redirect(url_for('dashboard'))
+        
+    return render_template('lesson.html', document=document)
 
+
+
+
+# Đảm bảo phần khởi chạy app phải nằm ở dưới cùng
 if __name__ == "__main__":
     with app.app_context():
         db.create_all()
