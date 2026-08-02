@@ -2,7 +2,7 @@ from flask import Flask, render_template, request, flash, redirect, session, url
 from flask_sqlalchemy import SQLAlchemy
 # Thêm thư viện mã hóa mật khẩu để bảo mật tài khoản
 from werkzeug.security import generate_password_hash, check_password_hash
-# [✓] CẬP NHẬT: Import thêm hàm generate_flashcards từ ai_helper
+# Import các hàm xử lý AI từ ai_helper
 from ai_helper import generate_summary, generate_flashcards
 
 app = Flask(__name__)
@@ -32,7 +32,7 @@ class Document(db.Model):
     original_text = db.Column(db.Text, nullable=False)
     summary_text = db.Column(db.Text)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-    # Mối quan hệ giúp lấy danh sách flashcards của tài liệu dễ dàng
+    # Mối quan hệ giúp lấy danh sách flashcards của tài liệu
     flashcards = db.relationship('Flashcard', backref='document', lazy=True)
 
 class Flashcard(db.Model):
@@ -74,18 +74,16 @@ def upload_doc():
             original_text = request.form.get('study_content', '')
 
         if original_text.strip():
-            # [✓] BỌC TOÀN BỘ QUY TRÌNH GỌI AI & LƯU DB VÀO TRY-EXCEPT
             try:
                 # 1. Tóm tắt tài liệu bằng Gemini AI
                 ai_summary = generate_summary(original_text)
-                print(ai_summary)
 
                 # 2. Lưu thông tin Document vào DB
                 doc = Document(
                     title="Bài học mới",
                     original_text=original_text,
                     summary_text=ai_summary,
-                    user_id=session['user_id'] 
+                    user_id=session['user_id']
                 )
 
                 db.session.add(doc)
@@ -104,18 +102,16 @@ def upload_doc():
                                 document_id=doc.id
                             )
                             db.session.add(card)
-                    
+
                     db.session.commit() # Commit các thẻ ghi nhớ vào DB
 
                 flash("Tài liệu đã được tóm tắt và tạo bộ Flashcard thành công!", "success")
-                return redirect(url_for('upload_doc'))
+                return redirect(url_for('dashboard'))
 
             except Exception as e:
-                db.session.rollback() # Khôi phục lại trạng thái DB
-                print(f"Lỗi hệ thống chi tiết: {e}") # In ra Terminal
-                
-                # 🟢 IN NGUYÊN VĂN LỖI LÊN MÀN HÌNH ĐỂ DEBUG
-                flash(f"Lỗi AI / DB chi tiết: {str(e)}", "error")
+                db.session.rollback() # Khôi phục lại trạng thái DB nếu xảy ra lỗi
+                print(f"Lỗi hệ thống chi tiết: {e}")
+                flash(f"Lỗi xử lý tài liệu: {str(e)}", "error")
                 return redirect(url_for('upload_doc'))
 
         else:
@@ -131,21 +127,21 @@ def register():
         username = request.form.get('username')
         email = request.form.get('email')
         password = request.form.get('password')
-        
+
         user_exists = User.query.filter_by(email=email).first()
         if user_exists:
             flash("Email này đã được đăng ký trước đó rồi!", "warning")
             return redirect(url_for('register'))
-            
+
         hashed_password = generate_password_hash(password, method='pbkdf2:sha256')
-        
+
         new_user = User(username=username, email=email, password=hashed_password)
         db.session.add(new_user)
         db.session.commit()
-        
+
         flash("Đăng ký thành công! Vui lòng đăng nhập.", "success")
         return redirect(url_for('login'))
-        
+
     return render_template('register.html')
 
 
@@ -154,34 +150,35 @@ def login():
     if request.method == 'POST':
         email = request.form.get('email')
         password = request.form.get('password')
-        
+
         user = User.query.filter_by(email=email).first()
-        
+
         if user and check_password_hash(user.password, password):
             session['user_id'] = user.id
-            session['username'] = user.username 
-            
+            session['username'] = user.username
+
             flash(f"Đăng nhập thành công! Chào mừng {user.username} quay trở lại.", "success")
-            return redirect(url_for('index'))
+            return redirect(url_for('dashboard'))
         else:
             flash("Email hoặc mật khẩu không đúng. Vui lòng kiểm tra lại!", "danger")
             return redirect(url_for('login'))
-            
+
     return render_template('login.html')
 
 
 @app.route('/logout')
 def logout():
-    session.clear() 
+    session.clear()
     flash("Bạn đã đăng xuất thành công.", "info")
     return redirect(url_for('index'))
+
 
 @app.route('/dashboard')
 def dashboard():
     if 'user_id' not in session:
         flash("Vui lòng đăng nhập để truy cập trang chủ!", "warning")
         return redirect(url_for('login'))
-        
+
     # Lấy toàn bộ tài liệu thuộc về người dùng đang đăng nhập
     user_docs = Document.query.filter_by(user_id=session['user_id']).all()
     return render_template('dashboard.html', documents=user_docs)

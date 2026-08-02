@@ -32,8 +32,8 @@ def generate_summary(original_text):
         return "Lỗi: Chưa cấu hình API Key."
 
     try:
-        model = genai.GenerativeModel("gemini-2.5-flash")
-        
+        # ❌ ĐÃ XÓA: Dòng model = genai.GenerativeModel(...) gây lỗi ở đây
+
         prompt = f"""
         Bạn là một gia sư tận tâm và thông minh.
         Hãy đọc và tóm tắt nội dung văn bản dưới đây theo các quy tắc khắt khe sau:
@@ -49,7 +49,7 @@ def generate_summary(original_text):
 
         # 🟢 Gọi API thông qua client.models.generate_content
         response = client.models.generate_content(
-            model="gemini-1.5-flash",
+            model="gemini-3.6-flash",
             contents=prompt,
         )
         return response.text
@@ -69,8 +69,8 @@ def generate_flashcards(text):
         return []
 
     try:
-        model = genai.GenerativeModel("gemini-2.5-flash")
-        
+        # ❌ ĐÃ XÓA: Dòng model = genai.GenerativeModel(...) gây lỗi ở đây
+
         prompt = f"""
         Dựa vào nội dung văn bản dưới đây, hãy tạo các thẻ ghi nhớ (flashcards) tóm tắt các kiến thức cốt lõi.
 
@@ -82,7 +82,7 @@ def generate_flashcards(text):
 
         # 🟢 Ép Gemini trả về đúng cấu trúc danh sách Flashcard bằng response_schema
         response = client.models.generate_content(
-            model="gemini-1.5-flash",
+            model="gemini-3.6-flash",
             contents=prompt,
             config=types.GenerateContentConfig(
                 response_mime_type="application/json",
