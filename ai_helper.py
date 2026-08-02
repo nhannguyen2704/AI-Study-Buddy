@@ -32,7 +32,7 @@ def generate_summary(original_text):
         return "Lỗi: Chưa cấu hình API Key."
 
     try:
-        model = genai.GenerativeModel("gemini-1.5-flash")
+        model = genai.GenerativeModel("gemini-2.5-flash")
         
         prompt = f"""
         Bạn là một gia sư tận tâm và thông minh.
@@ -69,7 +69,7 @@ def generate_flashcards(text):
         return []
 
     try:
-        model = genai.GenerativeModel("gemini-1.5-flash")
+        model = genai.GenerativeModel("gemini-2.5-flash")
         
         prompt = f"""
         Dựa vào nội dung văn bản dưới đây, hãy tạo các thẻ ghi nhớ (flashcards) tóm tắt các kiến thức cốt lõi.
