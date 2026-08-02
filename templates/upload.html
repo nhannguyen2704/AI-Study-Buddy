@@ -8,141 +8,149 @@
     <h1 class="text-3xl font-semibold text-slate-900">Nhập tài liệu</h1>
     <p class="mt-3 text-slate-600">Dán nội dung hoặc thả tập tin vào khung để bắt đầu.</p>
 
-    <!-- [✓] ĐÃ THÊM: enctype="multipart/form-data" để gửi file về Flask -->
+    <!-- Thẻ FORM bắt buộc phải có enctype="multipart/form-data" -->
     <form method="POST" enctype="multipart/form-data" class="mt-8 space-y-6">
-      <div id="dropzone" class="group rounded-3xl border-2 border-dashed border-slate-300 bg-slate-50 px-6 py-10 text-center transition hover:border-slate-400 focus-within:border-slate-500">
-        <!-- [✓] ĐÃ THÊM: name="fileInput" -->
+      
+      <!-- Khung Dropzone hỗ trợ click và drag-drop -->
+      <div id="dropzone" class="group rounded-3xl border-2 border-dashed border-slate-300 bg-slate-50 px-6 py-10 text-center transition hover:border-slate-400 focus-within:border-slate-500 cursor-pointer">
         <input id="fileInput" name="fileInput" type="file" accept=".txt,.md,.pdf,.jpg,.jpeg,.png" class="hidden" />
-        <div class="flex flex-col items-center justify-center gap-3 text-slate-500">
+        <div class="flex flex-col items-center justify-center gap-3 text-slate-500 pointer-events-none">
           <span class="inline-flex h-14 w-14 items-center justify-center rounded-full bg-slate-100 text-slate-400 transition group-hover:bg-slate-200">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16V4m0 0L3 8m4-4l4 4m6 4v8m0 0l4-4m-4 4l-4-4" />
             </svg>
           </span>
           <div>
-            <label for="fileInput" class="cursor-pointer text-lg font-semibold text-slate-700">Kéo thả tệp vào đây</label>
-            <p class="mt-2 text-sm text-slate-500">hoặc nhấp để chọn tệp TXT / MD / PDF / JPG / PNG.</p>
+            <p class="text-lg font-semibold text-slate-700">Kéo thả tệp vào đây</p>
+            <p class="mt-2 text-sm text-slate-500">hoặc nhấp vào đây để chọn tệp TXT / MD / PDF / JPG / PNG.</p>
           </div>
         </div>
       </div>
 
+      <!-- Khung hiển thị và chỉnh sửa nội dung văn bản -->
       <div>
         <label for="study_content" class="mb-2 block text-sm font-medium text-slate-700">Nội dung tài liệu</label>
         <textarea id="study_content" name="study_content" rows="15" placeholder="Dán nội dung ở đây..." class="w-full rounded-3xl border border-slate-300 bg-white px-4 py-4 text-slate-900 shadow-sm transition focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-100"></textarea>
       </div>
 
-      <button type="submit" class="inline-flex items-center justify-center rounded-full bg-indigo-600 px-6 py-3 text-base font-semibold text-white shadow-lg shadow-indigo-500/20 transition hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2">Gửi tài liệu</button>
+      <!-- Nút gửi dữ liệu cho AI -->
+      <button type="submit" class="inline-flex items-center justify-center rounded-full bg-indigo-600 px-6 py-3 text-base font-semibold text-white shadow-lg shadow-indigo-500/20 transition hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2">
+        Gửi tài liệu
+      </button>
     </form>
   </div>
 </div>
 
 <script>
-  const dropzone = document.getElementById('dropzone');
-  const fileInput = document.getElementById('fileInput');
-  const textarea = document.getElementById('study_content');
-  
-  // Hàm chuyển đổi JSON / Văn bản mã hóa thành văn bản thuần tiếng Việt
-  function extractPureVietnameseText(rawContent) {
-    if (!rawContent) return '';
-  
-    let trimmed = rawContent.trim();
-  
-    // 1. Nếu nội dung nạp vào là dạng JSON
-    if ((trimmed.startsWith('{') && trimmed.endsWith('}')) || (trimmed.startsWith('[') && trimmed.endsWith(']'))) {
-      try {
-        const parsed = JSON.parse(trimmed);
-        return parseJsonToText(parsed);
-      } catch (e) {
-        // Nếu không parse được JSON chuẩn thì xử lý như chuỗi thường
-      }
-    }
-  
-    // 2. Nếu là văn bản thuần thường
-    return cleanControlChars(trimmed);
+const dropzone = document.getElementById('dropzone');
+const fileInput = document.getElementById('fileInput');
+const textarea = document.getElementById('study_content');
+
+// 1. KÍCH HOẠT MỞ FILE KHI NHẤP VÀO BẤT KỲ ĐÂU TRONG DROPZONE
+dropzone.addEventListener('click', (e) => {
+  if (e.target !== fileInput) {
+    fileInput.click();
   }
-  
-  // Hàm đệ quy duyệt qua các Object/Array trong JSON để rút chữ ra
-  function parseJsonToText(data) {
-    if (typeof data === 'string') {
-      return data;
-    }
-    if (typeof data === 'number' || typeof data === 'boolean') {
-      return String(data);
-    }
-    if (Array.isArray(data)) {
-      return data.map(item => parseJsonToText(item)).filter(Boolean).join('\n');
-    }
-    if (typeof data === 'object' && data !== null) {
-      let result = [];
-      for (let key in data) {
-        // Bỏ qua các key hệ thống không cần thiết nếu có
-        let val = parseJsonToText(data[key]);
-        if (val) result.push(val);
-      }
-      return result.join('\n');
-    }
-    return '';
-  }
-  
-  // Hàm lọc bỏ ký tự rác hệ thống
-  function cleanControlChars(text) {
-    return text.replace(/[\x00-\x09\x0B\x0C\x0E-\x1F\x7F]/g, '');
-  }
-  
-  ['dragenter', 'dragover'].forEach(eventName => {
-    dropzone.addEventListener(eventName, event => {
-      event.preventDefault();
-      event.stopPropagation();
-      dropzone.classList.add('border-indigo-500', 'bg-white');
-    });
-  });
-  
-  ['dragleave', 'drop'].forEach(eventName => {
-    dropzone.addEventListener(eventName, event => {
-      event.preventDefault();
-      event.stopPropagation();
-      dropzone.classList.remove('border-indigo-500', 'bg-white');
-    });
-  });
-  
-  dropzone.addEventListener('drop', event => {
+});
+
+// 2. XỬ LÝ SỰ KIỆN KÉO THẢ (DRAG & DROP)
+['dragenter', 'dragover'].forEach(eventName => {
+  dropzone.addEventListener(eventName, event => {
     event.preventDefault();
-    const files = event.dataTransfer.files;
-    if (files.length === 0) return;
-    fileInput.files = files;
-  
-    processFile(files[0]);
+    event.stopPropagation();
+    dropzone.classList.add('border-indigo-500', 'bg-white');
   });
-  
-  fileInput.addEventListener('change', () => {
-    const file = fileInput.files[0];
-    if (!file) return;
-  
-    processFile(file);
+});
+
+['dragleave', 'drop'].forEach(eventName => {
+  dropzone.addEventListener(eventName, event => {
+    event.preventDefault();
+    event.stopPropagation();
+    dropzone.classList.remove('border-indigo-500', 'bg-white');
   });
-  
-  function processFile(file) {
-    const reader = new FileReader();
-  
-    reader.onload = e => {
-      const rawResult = e.target.result;
-      
-      // 🟢 Chuyển đổi và trích xuất văn bản thuần tiếng Việt
-      const pureVietnameseText = extractPureVietnameseText(rawResult);
-      
-      // Đổ vào textarea
-      textarea.value = pureVietnameseText;
-  
-      // Cập nhật giao diện Dropzone
-      dropzone.innerHTML = `
-        <div class="flex flex-col items-center justify-center gap-1">
-          <p class="text-indigo-600 font-semibold text-lg">📄 ${file.name}</p>
-          <p class="text-xs text-slate-400">Đã trích xuất văn bản thuần thành công!</p>
-        </div>
-      `;
-    };
-  
-    reader.readAsText(file, 'UTF-8');
+});
+
+dropzone.addEventListener('drop', event => {
+  event.preventDefault();
+  const files = event.dataTransfer.files;
+  if (files.length === 0) return;
+  fileInput.files = files; // Gán danh sách file vào thẻ input
+
+  processFile(files[0]);
+});
+
+// 3. XỬ LÝ KHI CHỌN FILE BẰNG CỬA SỔ BROWSER
+fileInput.addEventListener('change', () => {
+  const file = fileInput.files[0];
+  if (!file) return;
+
+  processFile(file);
+});
+
+// 4. HÀM ĐỌC VÀ LÀM SẠCH VĂN BẢN THUẦN TIẾNG VIỆT (UTF-8)
+function processFile(file) {
+  const reader = new FileReader();
+
+  reader.onload = e => {
+    const rawResult = e.target.result;
+    
+    // Tự động bóc tách nếu đầu vào là JSON hoặc giữ nguyên văn bản thuần
+    const pureVietnameseText = extractPureText(rawResult);
+    
+    // Đổ nội dung vào ô Textarea
+    textarea.value = pureVietnameseText;
+
+    // Đổi giao diện khung Dropzone báo đã nạp file thành công
+    dropzone.innerHTML = `
+      <div class="flex flex-col items-center justify-center gap-1 py-2">
+        <p class="text-indigo-600 font-semibold text-lg">📄 ${file.name}</p>
+        <p class="text-xs text-slate-400">Đã nạp văn bản thuần tiếng Việt vào khung bên dưới thành công!</p>
+        <p class="text-xs text-indigo-500 underline mt-1">Nhấp để chọn tệp khác</p>
+      </div>
+    `;
+  };
+
+  // Đọc file theo định dạng chuẩn UTF-8
+  reader.readAsText(file, 'UTF-8');
+}
+
+// 5. CÁC HÀM PHỤ TRỢ BÓC TÁCH JSON / LÀM SẠCH VĂN BẢN
+function extractPureText(rawContent) {
+  if (!rawContent) return '';
+  let trimmed = rawContent.trim();
+
+  // Kiểm tra nếu file là chuỗi JSON
+  if ((trimmed.startsWith('{') && trimmed.endsWith('}')) || (trimmed.startsWith('[') && trimmed.endsWith(']'))) {
+    try {
+      const parsed = JSON.parse(trimmed);
+      return parseJsonToText(parsed);
+    } catch (e) {
+      // Nếu không parse được JSON chuẩn thì xử lý như văn bản thường
+    }
   }
-  </script>
+
+  return cleanControlChars(trimmed);
+}
+
+function parseJsonToText(data) {
+  if (typeof data === 'string') return data;
+  if (typeof data === 'number' || typeof data === 'boolean') return String(data);
+  if (Array.isArray(data)) {
+    return data.map(item => parseJsonToText(item)).filter(Boolean).join('\n');
+  }
+  if (typeof data === 'object' && data !== null) {
+    let result = [];
+    for (let key in data) {
+      let val = parseJsonToText(data[key]);
+      if (val) result.push(val);
+    }
+    return result.join('\n');
+  }
+  return '';
+}
+
+function cleanControlChars(text) {
+  return text.replace(/[\x00-\x09\x0B\x0C\x0E-\x1F\x7F]/g, '');
+}
+</script>
 {% endblock %}
