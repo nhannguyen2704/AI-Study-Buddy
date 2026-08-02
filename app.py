@@ -78,6 +78,7 @@ def upload_doc():
             try:
                 # 1. Tóm tắt tài liệu bằng Gemini AI
                 ai_summary = generate_summary(original_text)
+                print(ai_summary)
 
                 # 2. Lưu thông tin Document vào DB
                 doc = Document(
