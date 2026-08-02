@@ -49,9 +49,7 @@
                     </div>
                     <div class="pt-4 border-t border-slate-50 flex items-center justify-between">
                         <span class="text-xs text-slate-400">ID: #{{ doc.id }}</span>
-                        <a href="#" class="text-indigo-600 hover:text-indigo-800 text-sm font-semibold inline-flex items-center gap-1">
-                            Xem chi tiết &rarr;
-                        </a>
+                        <a href="{{ url_for('view_document', doc_id=doc.id) }}" class="text_link">Xem chi tiết &rarr;</a>
                     </div>
                 </div>
             {% endfor %}

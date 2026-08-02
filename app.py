@@ -183,6 +183,18 @@ def dashboard():
     user_docs = Document.query.filter_by(user_id=session['user_id']).all()
     return render_template('dashboard.html', documents=user_docs)
 
+@app.route('/document/<int:doc_id>')
+def view_document(doc_id):
+    # Kiểm tra người dùng đã đăng nhập chưa
+    if 'user_id' not in session:
+        flash("Vui lòng đăng nhập để xem nội dung tài liệu!", "warning")
+        return redirect(url_for('login'))
+        
+    # Lấy tài liệu theo doc_id và đảm bảo tài liệu thuộc về user đang đăng nhập
+    doc = Document.query.filter_by(id=doc_id, user_id=session['user_id']).first_or_404()
+    
+    return render_template('detail.html', doc=doc)
+
 
 if __name__ == "__main__":
     with app.app_context():
