@@ -195,6 +195,10 @@ def view_document(doc_id):
     
     return render_template('detail.html', doc=doc)
 
+@app.route('/aboutus')
+def aboutus():
+    return render_template('aboutus.html')
+
 
 if __name__ == "__main__":
     with app.app_context():
