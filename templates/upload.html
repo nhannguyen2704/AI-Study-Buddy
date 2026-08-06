@@ -3,19 +3,53 @@
 {% block title %}Nhập tài liệu - AI Study Buddy{% endblock %}
 
 {% block content %}
+<style>
+/* Đảm bảo vòng xoay hoạt động độc lập không phụ thuộc Tailwind */
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.custom-spinner {
+  width: 50px;
+  height: 50px;
+  border: 5px solid #e2e8f0;
+  border-top: 5px solid #4f46e5;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+/* Lớp phủ kín toàn màn hình */
+#loadingOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: rgba(15, 23, 42, 0.65);
+  backdrop-filter: blur(4px);
+  z-index: 99999;
+  display: none; /* Mặc định ẩn */
+  align-items: center;
+  justify-content: center;
+}
+
+#loadingOverlay.active {
+  display: flex !important;
+}
+</style>
+
 <div class="max-w-3xl mx-auto">
   <div class="rounded-3xl bg-white p-8 shadow-xl border border-slate-200">
     <h1 class="text-3xl font-semibold text-slate-900">Nhập tài liệu</h1>
     <p class="mt-3 text-slate-600">Dán nội dung hoặc thả tập tin vào khung để bắt đầu.</p>
 
-    <!-- Thẻ FORM bắt buộc phải có enctype="multipart/form-data" -->
-    <form method="POST" enctype="multipart/form-data" class="mt-8 space-y-6">
+    <!-- Form gửi dữ liệu -->
+    <form id="uploadForm" method="POST" enctype="multipart/form-data" class="mt-8 space-y-6">
       
-      <!-- Input file ẩn (đặt ngoài dropzone để không bị xóa khi cập nhật giao diện) -->
-      <input id="fileInput" name="fileInput" type="file" accept=".txt,.md,.pdf,.jpg,.jpeg,.png" class="hidden" />
-
-      <!-- Khung Dropzone hỗ trợ click và drag-drop -->
+      <!-- Khung Dropzone -->
       <div id="dropzone" class="group rounded-3xl border-2 border-dashed border-slate-300 bg-slate-50 px-6 py-10 text-center transition hover:border-slate-400 focus-within:border-slate-500 cursor-pointer">
+        <input id="fileInput" name="fileInput" type="file" accept=".txt,.md,.pdf,.jpg,.jpeg,.png" class="hidden" />
         <div class="flex flex-col items-center justify-center gap-3 text-slate-500 pointer-events-none">
           <span class="inline-flex h-14 w-14 items-center justify-center rounded-full bg-slate-100 text-slate-400 transition group-hover:bg-slate-200">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -29,18 +63,28 @@
         </div>
       </div>
 
-
-      <!-- Khung hiển thị và chỉnh sửa nội dung văn bản -->
+      <!-- Textarea -->
       <div>
         <label for="study_content" class="mb-2 block text-sm font-medium text-slate-700">Nội dung tài liệu</label>
         <textarea id="study_content" name="study_content" rows="15" placeholder="Dán nội dung ở đây..." class="w-full rounded-3xl border border-slate-300 bg-white px-4 py-4 text-slate-900 shadow-sm transition focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-100"></textarea>
       </div>
 
-      <!-- Nút gửi dữ liệu cho AI -->
-      <button type="submit" class="inline-flex items-center justify-center rounded-full bg-indigo-600 px-6 py-3 text-base font-semibold text-white shadow-lg shadow-indigo-500/20 transition hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2">
+      <!-- Nút gửi dữ liệu -->
+      <button id="submitBtn" type="submit" class="inline-flex items-center justify-center rounded-full bg-indigo-600 px-6 py-3 text-base font-semibold text-white shadow-lg shadow-indigo-500/20 transition hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2">
         Gửi tài liệu
       </button>
     </form>
+  </div>
+</div>
+
+<!-- POPUP LOADING CHE TOÀN MÀN HÌNH -->
+<div id="loadingOverlay">
+  <div class="bg-white p-8 rounded-3xl shadow-2xl text-center flex flex-col items-center gap-4 max-w-sm mx-4">
+    <div class="custom-spinner"></div>
+    <div>
+      <p class="text-lg font-bold text-slate-800 m-0">AI đang xử lý tài liệu...</p>
+      <p class="text-sm text-slate-500 mt-2 m-0">Đợi xíu nhé, hệ thống đang tóm tắt & tạo bộ Flashcard cho bạn!</p>
+    </div>
   </div>
 </div>
 
@@ -48,15 +92,22 @@
 const dropzone = document.getElementById('dropzone');
 const fileInput = document.getElementById('fileInput');
 const textarea = document.getElementById('study_content');
+const uploadForm = document.getElementById('uploadForm');
+const loadingOverlay = document.getElementById('loadingOverlay');
 
-// 1. KÍCH HOẠT MỞ FILE KHI NHẤP VÀO BẤT KỲ ĐÂU TRONG DROPZONE
+// BẮT SỰ KIỆN SUBMIT VÀ KÍCH HOẠT POPUP
+uploadForm.addEventListener('submit', function() {
+  loadingOverlay.classList.add('active');
+});
+
+// 1. KÍCH HOẠT MỞ FILE KHI NHẤP VÀO DROPZONE
 dropzone.addEventListener('click', (e) => {
   if (e.target !== fileInput) {
     fileInput.click();
   }
 });
 
-// 2. XỬ LÝ SỰ KIỆN KÉO THẢ (DRAG & DROP)
+// 2. XỬ LÝ DRAG & DROP
 ['dragenter', 'dragover'].forEach(eventName => {
   dropzone.addEventListener(eventName, event => {
     event.preventDefault();
@@ -77,80 +128,44 @@ dropzone.addEventListener('drop', event => {
   event.preventDefault();
   const files = event.dataTransfer.files;
   if (files.length === 0) return;
-  fileInput.files = files; // Gán danh sách file vào thẻ input
-
+  fileInput.files = files;
   processFile(files[0]);
 });
 
-// 3. XỬ LÝ KHI CHỌN FILE BẰNG CỬA SỔ BROWSER
+// 3. CHỌN FILE BẰNG DIALOG
 fileInput.addEventListener('change', () => {
   const file = fileInput.files[0];
   if (!file) return;
-
   processFile(file);
 });
 
-// 4. HÀM ĐỌC VÀ LÀM SẠCH VĂN BẢN THUẦN TIẾNG VIỆT (UTF-8)
+// 4. ĐỌC FILE
 function processFile(file) {
-  const fileName = file.name.toLowerCase();
-
-  // Nếu là file PDF hoặc ảnh → KHÔNG đọc nội dung ở client, để server xử lý
-  if (fileName.endsWith('.pdf') || fileName.endsWith('.jpg') || fileName.endsWith('.jpeg') || fileName.endsWith('.png')) {
-    // Xóa nội dung textarea để tránh gửi dữ liệu thừa lên server
-    textarea.value = '';
-
-    // Đổi giao diện khung Dropzone báo đã chọn file
-    dropzone.innerHTML = `
-      <div class="flex flex-col items-center justify-center gap-1 py-2">
-        <p class="text-indigo-600 font-semibold text-lg">📄 ${file.name}</p>
-        <p class="text-xs text-slate-400">File sẽ được gửi lên server để xử lý. Nhấn "Gửi tài liệu" để tiếp tục.</p>
-        <p class="text-xs text-indigo-500 underline mt-1">Nhấp để chọn tệp khác</p>
-      </div>
-    `;
-    return;
-  }
-
-  // Với file text (.txt, .md) → đọc nội dung hiển thị vào textarea
   const reader = new FileReader();
-
   reader.onload = e => {
     const rawResult = e.target.result;
-    
-    // Tự động bóc tách nếu đầu vào là JSON hoặc giữ nguyên văn bản thuần
-    const pureVietnameseText = extractPureText(rawResult);
-    
-    // Đổ nội dung vào ô Textarea
-    textarea.value = pureVietnameseText;
+    textarea.value = extractPureText(rawResult);
 
-    // Đổi giao diện khung Dropzone báo đã nạp file thành công
     dropzone.innerHTML = `
       <div class="flex flex-col items-center justify-center gap-1 py-2">
         <p class="text-indigo-600 font-semibold text-lg">📄 ${file.name}</p>
-        <p class="text-xs text-slate-400">Đã nạp văn bản thuần tiếng Việt vào khung bên dưới thành công!</p>
+        <p class="text-xs text-slate-400">Đã nạp văn bản thuần tiếng Việt thành công!</p>
         <p class="text-xs text-indigo-500 underline mt-1">Nhấp để chọn tệp khác</p>
       </div>
     `;
   };
-
-  // Đọc file theo định dạng chuẩn UTF-8
   reader.readAsText(file, 'UTF-8');
 }
 
-// 5. CÁC HÀM PHỤ TRỢ BÓC TÁCH JSON / LÀM SẠCH VĂN BẢN
 function extractPureText(rawContent) {
   if (!rawContent) return '';
   let trimmed = rawContent.trim();
-
-  // Kiểm tra nếu file là chuỗi JSON
   if ((trimmed.startsWith('{') && trimmed.endsWith('}')) || (trimmed.startsWith('[') && trimmed.endsWith(']'))) {
     try {
       const parsed = JSON.parse(trimmed);
       return parseJsonToText(parsed);
-    } catch (e) {
-      // Nếu không parse được JSON chuẩn thì xử lý như văn bản thường
-    }
+    } catch (e) {}
   }
-
   return cleanControlChars(trimmed);
 }
 
