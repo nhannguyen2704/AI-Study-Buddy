@@ -1,0 +1,176 @@
+{% extends "base.html" %}
+
+{% block title %}Danh Sách Tác Giả{% endblock %}
+
+{% block content %}
+<style>
+    .authors-wrapper {
+        max-width: 950px;
+        margin: 60px auto;
+        padding: 0 24px;
+        font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    }
+
+    .authors-header {
+        text-align: center;
+        margin-bottom: 45px;
+    }
+
+    .authors-header h1 {
+        font-size: 2.5rem;
+        font-weight: 700;
+        color: #0f172a;
+        margin-bottom: 12px;
+    }
+
+    .authors-header p {
+        color: #64748b;
+        font-size: 1.1rem;
+    }
+
+    .authors-container {
+        display: flex;
+        flex-direction: column;
+        gap: 24px;
+    }
+
+    .author-item {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        background: #ffffff;
+        padding: 24px 32px;
+        border-radius: 20px;
+        border: 1px solid #e2e8f0;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.03);
+        transition: all 0.25s ease;
+    }
+
+    .author-item:hover {
+        border-color: #cbd5e1;
+        box-shadow: 0 12px 30px -5px rgba(0,0,0,0.08);
+        transform: translateY(-3px);
+    }
+
+    .author-info {
+        display: flex;
+        align-items: center;
+        gap: 24px;
+    }
+
+    /* Ô chứa ảnh đại diện 80x80px */
+    .author-avatar {
+        width: 80px;
+        height: 80px;
+        border-radius: 50%;
+        background-color: #f1f5f9;
+        border: 3px solid #e2e8f0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+        flex-shrink: 0;
+    }
+
+    .author-avatar img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    .author-avatar-placeholder {
+        font-size: 2.2rem;
+        color: #94a3b8;
+    }
+
+    .author-name {
+        font-size: 1.4rem;
+        font-weight: 600;
+        color: #1e293b;
+    }
+
+    .author-link {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        padding: 14px 24px;
+        background-color: #2563eb;
+        color: #ffffff;
+        font-size: 1.05rem;
+        font-weight: 600;
+        text-decoration: none;
+        border-radius: 12px;
+        transition: background-color 0.2s ease;
+    }
+
+    .author-link:hover {
+        background-color: #1d4ed8;
+    }
+
+    .author-link svg {
+        width: 20px;
+        height: 20px;
+        fill: currentColor;
+    }
+</style>
+
+<div class="authors-wrapper">
+    <div class="authors-header">
+        <h1>Nhóm Tác Giả</h1>
+        <p>Chọn thành viên bên dưới để xem thông tin chi tiết</p>
+    </div>
+
+    <div class="authors-container">
+        <!-- TÁC GIẢ 1 -->
+        <div class="author-item">
+            <div class="author-info">
+                <div class="author-avatar">
+                    <!-- DÁN LINK ẢNH TÁC GIẢ 1 VÀO TRONG DẤU NGOẶC KÉP CỦA src="" -->
+                    <img src="{{(url_for('static',filename='images/pythonnangcao.jpg'))}}" alt="Nguyễn Thành Nhân" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+                    <span class="author-avatar-placeholder" style="display:none;">👤</span>
+                </div>
+                <div class="author-name">Nguyễn Thành Nhân</div>
+            </div>
+            <!-- DÁN LINK TRANG GIỚI THIỆU TÁC GIẢ 1 VÀO TRONG DẤU NGOẶC KÉP CỦA href="" -->
+            <a href="https://my-portfolio-z0uf.onrender.com" class="author-link">
+                <span>Xem giới thiệu</span>
+                <svg viewBox="0 0 20 20"><path d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z"/></svg>
+            </a>
+        </div>
+
+        <!-- TÁC GIẢ 2 -->
+        <div class="author-item">
+            <div class="author-info">
+                <div class="author-avatar">
+                    <!-- DÁN LINK ẢNH TÁC GIẢ 2 VÀO TRONG DẤU NGOẶC KÉP CỦA src="" -->
+                    <img src="{{(url_for('static',filename='images/thắng.jpg'))}}" alt="Nhan Minh Thắng" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+                    <span class="author-avatar-placeholder" style="display:none;">👤</span>
+                </div>
+                <div class="author-name">Nhan Minh Thắng</div>
+            </div>
+            <!-- DÁN LINK TRANG GIỚI THIỆU TÁC GIẢ 2 VÀO TRONG DẤU NGOẶC KÉP CỦA href="" -->
+            <a href="" class="author-link">
+                <span>Xem giới thiệu</span>
+                <svg viewBox="0 0 20 20"><path d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z"/></svg>
+            </a>
+        </div>
+
+        <!-- TÁC GIẢ 3 -->
+        <div class="author-item">
+            <div class="author-info">
+                <div class="author-avatar">
+                    <!-- DÁN LINK ẢNH TÁC GIẢ 3 VÀO TRONG DẤU NGOẶC KÉP CỦA src="" -->
+                    <img src="{{(url_for('static',filename='images/Ngân.jpg'))}}" alt="Lê Huyền Hải Ngân" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+                    <span class="author-avatar-placeholder" style="display:none;">👤</span>
+                </div>
+                <div class="author-name">Lê Huyền Hải Ngân</div>
+            </div>
+            <!-- DÁN LINK TRANG GIỚI THIỆU TÁC GIẢ 3 VÀO TRONG DẤU NGOẶC KÉP CỦA href="" -->
+            <a href="" class="author-link">
+                <span>Xem giới thiệu</span>
+                <svg viewBox="0 0 20 20"><path d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z"/></svg>
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -4,6 +4,9 @@ from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import generate_password_hash, check_password_hash
 # Import các hàm xử lý AI từ ai_helper
 from ai_helper import generate_summary, generate_flashcards
+# Import thư viện đọc file PDF
+import PyPDF2
+import io
 
 app = Flask(__name__)
 
@@ -11,8 +14,17 @@ app = Flask(__name__)
 app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///studybuddy.db"
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 app.secret_key = "key_bi_mat_cua_nhom"
+# Cấu hình giới hạn kích thước file upload (50MB)
+app.config["MAX_CONTENT_LENGTH"] = 50 * 1024 * 1024
 
 db = SQLAlchemy(app)
+
+
+# Xử lý lỗi 413 khi file upload vượt quá giới hạn cho phép
+@app.errorhandler(413)
+def request_entity_too_large(error):
+    flash("File quá lớn! Kích thước tối đa cho phép là 50MB.", "error")
+    return redirect(url_for('upload_doc'))
 
 
 # ==============================================================================
@@ -53,73 +65,97 @@ def index():
 
 @app.route('/upload_doc', methods=['GET', 'POST'])
 def upload_doc():
-    # Kiểm tra đăng nhập
-    if 'user_id' not in session:
-        flash("Bạn cần đăng nhập để sử dụng tính năng tải lên tài liệu!", "warning")
-        return redirect(url_for('login'))
+    try:
+        print(f"Người dùng hiện tại: {session.get('username', 'Chưa đăng nhập')}")  # Debug thông tin người dùng
 
-    if request.method == 'POST':
-        original_text = ""
-        uploaded_file = request.files.get('fileInput')
+        # Kiểm tra đăng nhập
+        if 'user_id' not in session:
+            flash("Bạn cần đăng nhập để sử dụng tính năng tải lên tài liệu!", "warning")
+            return redirect(url_for('login'))
 
-        # Xử lý nếu người dùng tải file lên
-        if uploaded_file and uploaded_file.filename != '':
-            raw_bytes = uploaded_file.read()
-            try:
-                original_text = raw_bytes.decode("utf-8")
-            except UnicodeDecodeError:
-                original_text = raw_bytes.decode("utf-8-sig")
-        else:
-            # Nếu không có file, lấy nội dung từ ô Textarea
-            original_text = request.form.get('study_content', '')
+        if request.method == 'POST':
+            original_text = ""
+            print(f"Form dữ liệu nhận được: {request.form}")  # Debug dữ liệu form
+            uploaded_file = request.files.get('fileInput')
 
-        if original_text.strip():
-            try:
-                # 1. Tóm tắt tài liệu bằng Gemini AI
-                ai_summary = generate_summary(original_text)
+            print(f"Người dùng {session.get('username')} đang tải lên tài liệu: {uploaded_file.filename if uploaded_file else 'Không có tệp'}")
+            # Xử lý nếu người dùng tải file lên
+            if uploaded_file and uploaded_file.filename != '':
+                # Kiểm tra nếu file là PDF thì dùng PyPDF2 để trích xuất text
+                if uploaded_file.filename.lower().endswith('.pdf'):
+                    try:
+                        pdf_reader = PyPDF2.PdfReader(io.BytesIO(uploaded_file.read()))
+                        original_text = ""
+                        for page in pdf_reader.pages:
+                            page_text = page.extract_text()
+                            if page_text:
+                                original_text += page_text + "\n"
+                    except Exception as e:
+                        flash(f"Không thể đọc file PDF: {str(e)}", "error")
+                        return redirect(url_for('upload_doc'))
+                else:
+                    # Xử lý file text thông thường (.txt, .md, ...)
+                    raw_bytes = uploaded_file.read()
+                    try:
+                        original_text = raw_bytes.decode("utf-8")
+                    except UnicodeDecodeError:
+                        original_text = raw_bytes.decode("utf-8-sig")
+            else:
+                # Nếu không có file, lấy nội dung từ ô Textarea
+                original_text = request.form.get('study_content', '')
 
-                # 2. Lưu thông tin Document vào DB
-                doc = Document(
-                    title="Bài học mới",
-                    original_text=original_text,
-                    summary_text=ai_summary,
-                    user_id=session['user_id']
-                )
+            if original_text.strip():
+                try:
+                    print(f"Nội dung tài liệu gốc: {original_text[:100]}...")  # In ra 100 ký tự đầu tiên để kiểm tra
+                    # 1. Tóm tắt tài liệu bằng Gemini AI
+                    ai_summary = generate_summary(original_text)
+                    print(f"Tóm tắt từ Gemini AI: {ai_summary}")
 
-                db.session.add(doc)
-                db.session.commit() # Commit trước để lấy doc.id
+                    # 2. Lưu thông tin Document vào DB
+                    doc = Document(
+                        title="Bài học mới",
+                        original_text=original_text,
+                        summary_text=ai_summary,
+                        user_id=session['user_id']
+                    )
 
-                # 3. Gọi AI sinh danh sách Flashcards (dạng JSON)
-                flashcards_list = generate_flashcards(original_text)
+                    db.session.add(doc)
+                    db.session.commit() # Commit trước để lấy doc.id
 
-                # 4. Duyệt vòng lặp lưu các Flashcard vào Database
-                if flashcards_list and isinstance(flashcards_list, list):
-                    for item in flashcards_list:
-                        if isinstance(item, dict) and 'question' in item and 'answer' in item:
-                            card = Flashcard(
-                                question=item['question'],
-                                answer=item['answer'],
-                                document_id=doc.id
-                            )
-                            db.session.add(card)
+                    # 3. Gọi AI sinh danh sách Flashcards (dạng JSON)
+                    flashcards_list = generate_flashcards(original_text)
 
-                    db.session.commit() # Commit các thẻ ghi nhớ vào DB
+                    # 4. Duyệt vòng lặp lưu các Flashcard vào Database
+                    if flashcards_list and isinstance(flashcards_list, list):
+                        for item in flashcards_list:
+                            if isinstance(item, dict) and 'question' in item and 'answer' in item:
+                                card = Flashcard(
+                                    question=item['question'],
+                                    answer=item['answer'],
+                                    document_id=doc.id
+                                )
+                                db.session.add(card)
 
-                flash("Tài liệu đã được tóm tắt và tạo bộ Flashcard thành công!", "success")
-                return redirect(url_for('dashboard'))
+                        db.session.commit() # Commit các thẻ ghi nhớ vào DB
 
-            except Exception as e:
-                db.session.rollback() # Khôi phục lại trạng thái DB nếu xảy ra lỗi
-                print(f"Lỗi hệ thống chi tiết: {e}")
-                flash(f"Lỗi xử lý tài liệu: {str(e)}", "error")
+                    flash("Tài liệu đã được tóm tắt và tạo bộ Flashcard thành công!", "success")
+                    return redirect(url_for('dashboard'))
+
+                except Exception as e:
+                    db.session.rollback() # Khôi phục lại trạng thái DB nếu xảy ra lỗi
+                    print(f"Lỗi hệ thống chi tiết: {e}")
+                    flash(f"Lỗi xử lý tài liệu: {str(e)}", "error")
+                    return redirect(url_for('upload_doc'))
+
+            else:
+                flash("Vui lòng cung cấp nội dung tài liệu hoặc tải tệp lên!", "warning")
                 return redirect(url_for('upload_doc'))
 
-        else:
-            flash("Vui lòng cung cấp nội dung tài liệu hoặc tải tệp lên!", "warning")
-            return redirect(url_for('upload_doc'))
-
-    return render_template("upload.html")
-
+        return render_template("upload.html")
+    except Exception as e:
+        print(f"Lỗi hệ thống chi tiết: {e}")
+        flash(f"Lỗi hệ thống: {str(e)}", "error")
+        return render_template("upload.html")
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
@@ -194,6 +230,10 @@ def view_document(doc_id):
     doc = Document.query.filter_by(id=doc_id, user_id=session['user_id']).first_or_404()
     
     return render_template('detail.html', doc=doc)
+
+@app.route('/aboutus')
+def aboutus():
+    return render_template('aboutus.html')
 
 
 
