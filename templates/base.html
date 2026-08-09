@@ -18,8 +18,15 @@
         🎓 AI Study Buddy
       </a>
 
-      <!-- THANH MENU ĐIỀU HƯỚNG -->
-      <div class="flex items-center gap-6">
+      <!-- NÚT HAMBURGER MOBILE -->
+      <button id="mobile-menu-button" type="button" class="md:hidden p-2 rounded-lg text-slate-600 hover:text-indigo-600 hover:bg-slate-100 focus:outline-none" aria-label="Toggle Menu">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path id="menu-icon" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+        </svg>
+      </button>
+
+      <!-- THANH MENU DESKTOP -->
+      <div class="hidden md:flex items-center gap-6">
         {% if session.get('user_id') %}
           <!-- Menu cho người dùng ĐÃ đăng nhập -->
           <a href="{{ url_for('index') }}" 
@@ -67,6 +74,40 @@
       </div>
 
     </div>
+
+    <!-- MENU DROPDOWN MOBILE (Tự động ẩn/hiện) -->
+    <div id="mobile-menu" class="hidden md:hidden border-t border-slate-100 bg-white px-4 pt-3 pb-4 space-y-3">
+      {% if session.get('user_id') %}
+        <a href="{{ url_for('index') }}" class="block px-3 py-2 rounded-lg text-base font-medium {{ 'bg-indigo-50 text-indigo-600' if active_page == 'index' else 'text-slate-600 hover:bg-slate-50' }}">
+          Trang chủ
+        </a>
+        <a href="{{ url_for('upload_doc') }}" class="block px-3 py-2 rounded-lg text-base font-medium {{ 'bg-indigo-50 text-indigo-600' if active_page == 'upload_doc' else 'text-slate-600 hover:bg-slate-50' }}">
+          Tải tài liệu
+        </a>
+        <a href="{{ url_for('dashboard') }}" class="block px-3 py-2 rounded-lg text-base font-medium {{ 'bg-indigo-50 text-indigo-600' if active_page == 'dashboard' else 'text-slate-600 hover:bg-slate-50' }}">
+          Bài học
+        </a>
+        <a href="{{ url_for('aboutus') }}" class="block px-3 py-2 rounded-lg text-base font-medium {{ 'bg-indigo-50 text-indigo-600' if active_page == 'aboutus' else 'text-slate-600 hover:bg-slate-50' }}">
+          Tác giả
+        </a>
+        
+        <div class="pt-3 border-t border-slate-100 flex items-center justify-between">
+          <span class="text-sm text-slate-600 font-medium px-3">
+            👤 {{ session.get('username') }}
+          </span>
+          <a href="{{ url_for('logout') }}" class="text-xs text-red-500 font-semibold border border-red-200 px-3 py-1.5 rounded-lg hover:bg-red-50">
+            Đăng xuất
+          </a>
+        </div>
+      {% else %}
+        <a href="{{ url_for('login') }}" class="block w-full text-center py-2 rounded-lg text-slate-600 font-medium bg-slate-50">
+          Đăng nhập
+        </a>
+        <a href="{{ url_for('register') }}" class="block w-full text-center py-2 rounded-lg bg-indigo-600 text-white font-medium">
+          Đăng ký
+        </a>
+      {% endif %}
+    </div>
   </header>
 
   <!-- NỘI DUNG CHÍNH (MAIN) -->
@@ -98,6 +139,16 @@
       <div>Made with ❤️ · <a href="#contact" class="hover:underline text-indigo-600">Liên hệ hỗ trợ</a></div>
     </div>
   </footer>
+
+  <!-- SCRIPT BẬT/TẮT MENU MOBILE -->
+  <script>
+    const btn = document.getElementById('mobile-menu-button');
+    const menu = document.getElementById('mobile-menu');
+
+    btn.addEventListener('click', () => {
+      menu.classList.toggle('hidden');
+    });
+  </script>
 
 </body>
 </html>
