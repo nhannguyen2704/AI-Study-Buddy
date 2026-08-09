@@ -3,3 +3,4 @@ Flask-SQLAlchemy
 google-genai
 gunicorn
 PyPDF2
+python-dotenv
