@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, flash, redirect, session, url_for
+from flask import Flask, render_template, request, flash, redirect, session, url_for, jsonify
 from flask_sqlalchemy import SQLAlchemy
 # Thêm thư viện mã hóa mật khẩu để bảo mật tài khoản
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -60,7 +60,7 @@ class Flashcard(db.Model):
 
 @app.route('/')
 def index():
-    return render_template('index.html')
+    return render_template('index.html', active_page='index')
 
 
 @app.route('/upload_doc', methods=['GET', 'POST'])
@@ -151,11 +151,11 @@ def upload_doc():
                 flash("Vui lòng cung cấp nội dung tài liệu hoặc tải tệp lên!", "warning")
                 return redirect(url_for('upload_doc'))
 
-        return render_template("upload.html")
+        return render_template("upload.html", active_page='upload_doc')
     except Exception as e:
         print(f"Lỗi hệ thống chi tiết: {e}")
         flash(f"Lỗi hệ thống: {str(e)}", "error")
-        return render_template("upload.html")
+        return render_template("upload.html", active_page='upload_doc')
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
@@ -217,7 +217,7 @@ def dashboard():
 
     # Lấy toàn bộ tài liệu thuộc về người dùng đang đăng nhập
     user_docs = Document.query.filter_by(user_id=session['user_id']).all()
-    return render_template('dashboard.html', documents=user_docs)
+    return render_template('dashboard.html', documents=user_docs, active_page='dashboard')
 
 @app.route('/document/<int:doc_id>')
 def view_document(doc_id):
@@ -233,11 +233,54 @@ def view_document(doc_id):
 
 @app.route('/aboutus')
 def aboutus():
-    return render_template('aboutus.html')
+    return render_template('aboutus.html', active_page='aboutus')
 
+import google.generativeai as genai
+from flask import jsonify, request, session
 
+@app.route('/api/chat', methods=['POST'])
+def api_chat():
+    try:
+        if 'user_id' not in session:
+            return jsonify({'error': 'Bạn cần đăng nhập để thực hiện'}), 401
+            
+        data = request.get_json()
+        doc_id = data.get('doc_id')
+        question = data.get('question')
 
+        if not question:
+            return jsonify({'error': 'Câu hỏi không được để trống'}), 400
+            
+        doc = Document.query.filter_by(id=doc_id, user_id=session['user_id']).first()
+        if not doc:
+            return jsonify({'error': 'Không tìm thấy tài liệu'}), 404
 
+        # 1. Khởi tạo model AI trực tiếp (không dùng hàm tóm tắt cũ)
+        model = genai.GenerativeModel('gemini-3.6-flash')
+        
+        # 2. Xây dựng prompt rõ ràng
+        prompt = f"""
+        Bạn là một trợ lý AI thông minh. Hãy trả lời trực tiếp, chính xác câu hỏi của người dùng.
+
+        [Nội dung tài liệu đính kèm để tham khảo]:
+        {doc.original_text[:3000]}
+
+        [Lưu ý]: 
+        - Trả lời thẳng vào câu hỏi dưới đây. 
+        - Không tự ý tóm tắt bài học trừ khi người dùng yêu cầu.
+        
+        Câu hỏi của người dùng: {question}
+        """
+
+        # 3. Gửi cho Gemini tạo câu trả lời
+        response = model.generate_content(prompt)
+        ai_response = response.text
+
+        return jsonify({'answer': ai_response})
+
+    except Exception as e:
+        print(f"Lỗi API Chat: {e}")
+        return jsonify({'error': f'Lỗi hệ thống: {str(e)}'}), 500
 
 # Đảm bảo phần khởi chạy app phải nằm ở dưới cùng
 if __name__ == "__main__":

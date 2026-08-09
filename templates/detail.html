@@ -154,6 +154,89 @@
         color: #ffffff;
         border-color: #4f46e5;
     }
+
+    /* AI Chat Section Styles */
+    .chat-box {
+        height: 350px;
+        overflow-y: auto;
+        padding: 16px;
+        background-color: #f8fafc;
+        border-radius: 16px;
+        border: 1px solid #f1f5f9;
+    }
+
+    .chat-message {
+        margin-bottom: 14px;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .chat-message.user {
+        align-items: flex-end;
+    }
+
+    .chat-message.ai {
+        align-items: flex-start;
+    }
+
+    .bubble {
+        max-width: 80%;
+        padding: 12px 18px;
+        border-radius: 18px;
+        font-size: 0.95rem;
+        line-height: 1.5;
+    }
+
+    .chat-message.user .bubble {
+        background: var(--primary-gradient);
+        color: #ffffff;
+        border-bottom-right-radius: 4px;
+    }
+
+    .chat-message.ai .bubble {
+        background: #ffffff;
+        color: #1e293b;
+        border: 1px solid #e2e8f0;
+        border-bottom-left-radius: 4px;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.03);
+    }
+
+    .chat-input-container {
+        position: relative;
+    }
+
+    .chat-input {
+        border-radius: 16px;
+        padding-right: 50px;
+        border: 1px solid #cbd5e1;
+    }
+
+    .chat-input:focus {
+        border-color: #6366f1;
+        box-shadow: 0 0 0 0.25rem rgba(99, 102, 241, 0.15);
+    }
+
+    .btn-send {
+        position: absolute;
+        right: 8px;
+        top: 50%;
+        transform: translateY(-50%);
+        background: var(--primary-gradient);
+        color: white;
+        border: none;
+        border-radius: 12px;
+        width: 38px;
+        height: 38px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: opacity 0.2s;
+    }
+
+    .btn-send:hover {
+        opacity: 0.9;
+        color: white;
+    }
 </style>
 
 <div class="container py-4">
@@ -255,7 +338,124 @@
             </div>
         </div>
     </div>
+
+    <!-- KHUNG CHAT HỎI ĐÁP AI VỚI TÀI LIỆU -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="app-card">
+                <div class="d-flex align-items-center justify-content-between mb-3 pb-2 border-bottom">
+                    <h5 class="fw-bold m-0 text-dark d-flex align-items-center gap-2">
+                        <i class="fa-solid fa-comments text-indigo-600" style="color: #6366f1;"></i> Hỏi đáp AI về tài liệu này
+                    </h5>
+                    <span class="badge bg-light text-secondary border rounded-pill px-3 py-1">
+                        AI Study Companion
+                    </span>
+                </div>
+
+                <!-- Ô hiển thị tin nhắn -->
+                <div class="chat-box mb-3" id="chatBox">
+                    <div class="chat-message ai">
+                        <div class="bubble">
+                            👋 Xin chào! Mình là AI Trợ lý học tập. Bạn có thắc mắc gì về nội dung bài học <strong>"{{ doc.title }}"</strong> này không? Hãy đặt câu hỏi cho mình nhé!
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Form gửi câu hỏi -->
+                <form id="chatForm" onsubmit="sendChatMessage(event)">
+                    <div class="chat-input-container">
+                        <input type="text" id="userInput" class="form-control py-3 px-4 chat-input" placeholder="Hỏi AI bất kỳ điều gì về tài liệu này..." required autocomplete="off">
+                        <button type="submit" class="btn-send" id="btnSend">
+                            <i class="fa-solid fa-paper-plane"></i>
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+<script>
+    async function sendChatMessage(event) {
+        event.preventDefault();
+        
+        const inputField = document.getElementById('userInput');
+        const chatBox = document.getElementById('chatBox');
+        const btnSend = document.getElementById('btnSend');
+        const messageText = inputField.value.trim();
+
+        if (!messageText) return;
+
+        // 1. Hiển thị tin nhắn người dùng
+        const userMsgDiv = document.createElement('div');
+        userMsgDiv.className = 'chat-message user';
+        userMsgDiv.innerHTML = `<div class="bubble">${escapeHtml(messageText)}</div>`;
+        chatBox.appendChild(userMsgDiv);
+
+        inputField.value = '';
+        btnSend.disabled = true;
+        chatBox.scrollTop = chatBox.scrollHeight;
+
+        // 2. Hiển thị trạng thái AI đang trả lời
+        const loadingDiv = document.createElement('div');
+        loadingDiv.className = 'chat-message ai';
+        loadingDiv.id = 'aiLoadingMsg';
+        loadingDiv.innerHTML = `<div class="bubble text-muted"><i class="fa-solid fa-spinner fa-spin me-2"></i>AI đang suy nghĩ...</div>`;
+        chatBox.appendChild(loadingDiv);
+        chatBox.scrollTop = chatBox.scrollHeight;
+
+        try {
+            // 3. Gửi Request API về Flask Backend
+            const response = await fetch('/api/chat', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    doc_id: "{{ doc.id }}",
+                    question: messageText
+                })
+            });
+
+            const data = await response.json();
+            
+            // Xóa phần loading
+            const loadingMsg = document.getElementById('aiLoadingMsg');
+            if (loadingMsg) loadingMsg.remove();
+
+            // 4. Hiển thị phản hồi từ AI
+            const aiMsgDiv = document.createElement('div');
+            aiMsgDiv.className = 'chat-message ai';
+            
+            if (response.ok && data.answer) {
+                aiMsgDiv.innerHTML = `<div class="bubble">${data.answer}</div>`;
+            } else {
+                aiMsgDiv.innerHTML = `<div class="bubble text-danger"><i class="fa-solid fa-triangle-exclamation me-1"></i> ${data.error || 'Có lỗi xảy ra khi kết nối tới AI.'}</div>`;
+            }
+
+            chatBox.appendChild(aiMsgDiv);
+
+        } catch (error) {
+            const loadingMsg = document.getElementById('aiLoadingMsg');
+            if (loadingMsg) loadingMsg.remove();
+
+            const errorDiv = document.createElement('div');
+            errorDiv.className = 'chat-message ai';
+            errorDiv.innerHTML = `<div class="bubble text-danger"><i class="fa-solid fa-triangle-exclamation me-1"></i> Không thể kết nối với máy chủ.</div>`;
+            chatBox.appendChild(errorDiv);
+        } finally {
+            btnSend.disabled = false;
+            chatBox.scrollTop = chatBox.scrollHeight;
+        }
+    }
+
+    // Hàm mã hóa ký tự HTML tránh lỗi XSS
+    function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+</script>
 {% endblock %}
