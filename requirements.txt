@@ -1,4 +1,5 @@
 Flask
 Flask-SQLAlchemy
 google-genai
+gunicorn
 PyPDF2

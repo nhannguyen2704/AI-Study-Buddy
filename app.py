@@ -7,13 +7,14 @@ from ai_helper import generate_summary, generate_flashcards
 # Import thư viện đọc file PDF
 import PyPDF2
 import io
+import os
 
 app = Flask(__name__)
 
 # Cấu hình SQLite
 app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///studybuddy.db"
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
-app.secret_key = "key_bi_mat_cua_nhom"
+app.secret_key = os.environ.get('SECRET_KEY', 'default_secret_key')
 # Cấu hình giới hạn kích thước file upload (50MB)
 app.config["MAX_CONTENT_LENGTH"] = 50 * 1024 * 1024
 
