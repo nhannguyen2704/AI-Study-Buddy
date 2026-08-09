@@ -1,6 +1,7 @@
 Flask
 Flask-SQLAlchemy
 google-genai
+google-generativeai
 gunicorn
 PyPDF2
 python-dotenv
